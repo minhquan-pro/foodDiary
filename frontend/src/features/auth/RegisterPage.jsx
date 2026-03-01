@@ -30,7 +30,7 @@ export default function RegisterPage() {
 					<h2 className="text-4xl font-extrabold leading-tight">
 						Join the
 						<br />
-						FoodDiary Community
+						FoodShare Community
 					</h2>
 					<p className="mt-4 text-lg text-white/80 max-w-md">
 						Create your free account and start sharing your culinary experiences with food enthusiasts
@@ -67,7 +67,7 @@ export default function RegisterPage() {
 					<div className="lg:hidden mb-8 text-center">
 						<span className="text-4xl">🍽️</span>
 						<h1 className="mt-2 text-2xl font-extrabold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
-							FoodDiary
+							FoodShare
 						</h1>
 					</div>
 

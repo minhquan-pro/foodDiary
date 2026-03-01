@@ -26,11 +26,10 @@ export default function LoginPage() {
 			<div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-500 via-primary-600 to-orange-500 relative overflow-hidden">
 				<div className="absolute inset-0 bg-black/10" />
 				<div className="relative z-10 flex flex-col justify-center px-16 text-white">
-					<span className="text-5xl mb-6">🍽️</span>
 					<h2 className="text-4xl font-extrabold leading-tight">
 						Welcome back to
 						<br />
-						FoodDiary
+						FoodShare
 					</h2>
 					<p className="mt-4 text-lg text-white/80 max-w-md">
 						Discover amazing restaurants, share your food experiences, and connect with fellow food lovers.
@@ -58,7 +57,7 @@ export default function LoginPage() {
 					<div className="lg:hidden mb-8 text-center">
 						<span className="text-4xl">🍽️</span>
 						<h1 className="mt-2 text-2xl font-extrabold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
-							FoodDiary
+							FoodShare
 						</h1>
 					</div>
 

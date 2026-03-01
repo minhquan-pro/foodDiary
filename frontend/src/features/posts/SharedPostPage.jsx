@@ -69,7 +69,7 @@ export default function SharedPostPage() {
 						<div className="rounded-2xl bg-gradient-to-r from-primary-50 to-orange-50 p-6 text-center dark:from-primary-900/20 dark:to-orange-900/20">
 							<span className="text-3xl mb-3 block">🍽️</span>
 							<p className="font-semibold text-gray-800 dark:text-gray-200">
-								Join FoodDiary to like, comment, and share your own reviews!
+								Join FoodShare to like, comment, and share your own reviews!
 							</p>
 							<Link to="/register" className="btn-primary btn-lg mt-4 inline-block">
 								Sign Up Free
