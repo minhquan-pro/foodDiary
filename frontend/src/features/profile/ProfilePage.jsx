@@ -16,6 +16,7 @@ import {
 } from "./profileSlice.js";
 import PostCard from "../../components/PostCard.jsx";
 import Spinner from "../../components/Spinner.jsx";
+import ImageLightbox from "../../components/ImageLightbox.jsx";
 import {
 	FiEdit2,
 	FiCamera,
@@ -325,11 +326,13 @@ export default function ProfilePage() {
 					{/* Avatar */}
 					<div className="shrink-0">
 						{profile.avatarUrl ? (
-							<img
-								src={profile.avatarUrl}
-								alt={profile.name}
-								className="h-32 w-32 rounded-full object-cover border-4 border-white shadow-lg dark:border-gray-900"
-							/>
+							<ImageLightbox src={profile.avatarUrl} alt={profile.name}>
+								<img
+									src={profile.avatarUrl}
+									alt={profile.name}
+									className="h-32 w-32 rounded-full object-cover border-4 border-white shadow-lg dark:border-gray-900"
+								/>
+							</ImageLightbox>
 						) : (
 							<div className="flex h-32 w-32 items-center justify-center rounded-full bg-primary-100 text-4xl font-bold text-primary-600 border-4 border-white shadow-lg dark:bg-primary-900/30 dark:border-gray-900">
 								{profile.name.charAt(0).toUpperCase()}

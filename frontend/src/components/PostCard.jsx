@@ -13,6 +13,7 @@ import {
 	FiFlag,
 } from "react-icons/fi";
 import StarRating from "./StarRating.jsx";
+import ImageLightbox from "./ImageLightbox.jsx";
 import { toggleLike } from "../features/posts/postsSlice.js";
 import { followFromFeed, blockFromFeed, reportFromFeed } from "../features/feed/feedSlice.js";
 import toast from "react-hot-toast";
@@ -90,19 +91,21 @@ export default function PostCard({ post }) {
 	return (
 		<div className="card group animate-fade-in">
 			{/* Image */}
-			<Link to={`/posts/${post.id}`} className="block relative overflow-hidden">
-				<img
-					src={post.imageUrl}
-					alt={post.restaurantName}
-					className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-				/>
-				<div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+			<div className="block relative overflow-hidden">
+				<ImageLightbox src={post.imageUrl} alt={post.restaurantName}>
+					<img
+						src={post.imageUrl}
+						alt={post.restaurantName}
+						className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+					/>
+				</ImageLightbox>
+				<div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 				{/* Rating badge on image */}
-				<div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 shadow-sm dark:bg-gray-800/90">
+				<div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 shadow-sm dark:bg-gray-800/90 pointer-events-none">
 					<span className="text-yellow-500 text-sm">★</span>
 					<span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{post.rating}</span>
 				</div>
-			</Link>
+			</div>
 
 			<div className="p-5">
 				{/* User info row */}
@@ -110,11 +113,13 @@ export default function PostCard({ post }) {
 					<Link to={`/profile/${post.user.id}`} className="flex items-center gap-2.5 group/user">
 						<div className="relative">
 							{post.user.avatarUrl ? (
-								<img
-									src={post.user.avatarUrl}
-									alt={post.user.name}
-									className="h-9 w-9 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-700"
-								/>
+								<ImageLightbox src={post.user.avatarUrl} alt={post.user.name}>
+									<img
+										src={post.user.avatarUrl}
+										alt={post.user.name}
+										className="h-9 w-9 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-700"
+									/>
+								</ImageLightbox>
 							) : (
 								<div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-sm font-bold text-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400">
 									{post.user.name.charAt(0).toUpperCase()}

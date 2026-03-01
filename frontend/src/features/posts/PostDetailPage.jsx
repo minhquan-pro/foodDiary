@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchPost, clearCurrentPost, toggleLike, addComment, deleteComment, deletePost } from "./postsSlice.js";
 import StarRating from "../../components/StarRating.jsx";
 import Spinner from "../../components/Spinner.jsx";
+import ImageLightbox from "../../components/ImageLightbox.jsx";
 import {
 	FiHeart,
 	FiMessageCircle,
@@ -207,12 +208,14 @@ export default function PostDetailPage() {
 				<div className="lg:col-span-3">
 					<div className="card-static">
 						<div className="relative">
-							<img
-								src={post.imageUrl}
-								alt={post.restaurantName}
-								className="h-[400px] w-full object-cover"
-							/>
-							<div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1.5 shadow-md dark:bg-gray-800/90">
+							<ImageLightbox src={post.imageUrl} alt={post.restaurantName}>
+								<img
+									src={post.imageUrl}
+									alt={post.restaurantName}
+									className="h-[400px] w-full object-cover"
+								/>
+							</ImageLightbox>
+							<div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1.5 shadow-md dark:bg-gray-800/90 pointer-events-none">
 								<span className="text-yellow-500">★</span>
 								<span className="text-sm font-bold text-gray-800 dark:text-gray-200">
 									{post.rating}.0
@@ -224,11 +227,13 @@ export default function PostDetailPage() {
 							<div className="mb-5 flex items-center justify-between">
 								<Link to={`/profile/${post.user.id}`} className="flex items-center gap-3 group">
 									{post.user.avatarUrl ? (
-										<img
-											src={post.user.avatarUrl}
-											alt={post.user.name}
-											className="h-11 w-11 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-700"
-										/>
+										<ImageLightbox src={post.user.avatarUrl} alt={post.user.name}>
+											<img
+												src={post.user.avatarUrl}
+												alt={post.user.name}
+												className="h-11 w-11 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-700"
+											/>
+										</ImageLightbox>
 									) : (
 										<div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-sm font-bold text-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400">
 											{post.user.name.charAt(0).toUpperCase()}
