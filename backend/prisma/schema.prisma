@@ -1,0 +1,120 @@
+// ─── Prisma Schema ─── FoodDiary ────────────────────────────
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// User
+// ─────────────────────────────────────────────────────────────
+model User {
+    id        String   @id @default(uuid())
+    email     String   @unique
+    password  String
+    name      String
+    bio       String?
+    avatarUrl String?  @map("avatar_url")
+    facebook  String?
+    instagram String?
+    twitter   String?
+    tiktok    String?
+    youtube   String?
+    github    String?
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    posts    Post[]
+    comments Comment[]
+    likes    Like[]
+
+    // Social: who this user follows
+    following Follow[] @relation("follower")
+    // Social: who follows this user
+    followers Follow[] @relation("following")
+
+    @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Follow (friend / follow system)
+// ─────────────────────────────────────────────────────────────
+model Follow {
+    id          String   @id @default(uuid())
+    followerId  String   @map("follower_id")
+    followingId String   @map("following_id")
+    createdAt   DateTime @default(now()) @map("created_at")
+
+    follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+    following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+    @@unique([followerId, followingId])
+    @@map("follows")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Post (food review)
+// ─────────────────────────────────────────────────────────────
+model Post {
+    id                String   @id @default(uuid())
+    imageUrl          String   @map("image_url")
+    restaurantName    String   @map("restaurant_name")
+    restaurantAddress String   @map("restaurant_address")
+    rating            Int // 1-5
+    description       String
+    shareSlug         String   @unique @default(uuid()) @map("share_slug")
+    userId            String   @map("user_id")
+    createdAt         DateTime @default(now()) @map("created_at")
+    updatedAt         DateTime @updatedAt @map("updated_at")
+
+    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    comments Comment[]
+    likes    Like[]
+
+    @@index([userId])
+    @@index([createdAt(sort: Desc)])
+    @@map("posts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Comment
+// ─────────────────────────────────────────────────────────────
+model Comment {
+    id        String   @id @default(uuid())
+    body      String
+    userId    String   @map("user_id")
+    postId    String   @map("post_id")
+    parentId  String?  @map("parent_id")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+    parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+    replies Comment[] @relation("CommentReplies")
+
+    @@index([postId])
+    @@index([parentId])
+    @@map("comments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Like
+// ─────────────────────────────────────────────────────────────
+model Like {
+    id        String   @id @default(uuid())
+    userId    String   @map("user_id")
+    postId    String   @map("post_id")
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, postId])
+    @@index([postId])
+    @@map("likes")
+}
