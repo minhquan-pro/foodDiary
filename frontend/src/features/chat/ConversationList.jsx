@@ -18,7 +18,15 @@ function formatTime(dateStr) {
 	return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function ConversationList({ conversations, activeId, loading, currentUserId, isUserOnline, onSelect }) {
+export default function ConversationList({
+	conversations,
+	activeId,
+	loading,
+	currentUserId,
+	isUserOnline,
+	onSelect,
+	compact,
+}) {
 	const [search, setSearch] = useState("");
 
 	const filtered = conversations.filter((c) => c.otherUser?.name?.toLowerCase().includes(search.toLowerCase()));
@@ -26,12 +34,14 @@ export default function ConversationList({ conversations, activeId, loading, cur
 	return (
 		<>
 			{/* Header */}
-			<div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-				<div className="flex items-center gap-2">
-					<FiMessageSquare size={20} className="text-primary-500" />
-					<h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Messages</h2>
+			{!compact && (
+				<div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+					<div className="flex items-center gap-2">
+						<FiMessageSquare size={20} className="text-sky-400" />
+						<h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Messages</h2>
+					</div>
 				</div>
-			</div>
+			)}
 
 			{/* Search */}
 			<div className="px-4 py-3">
@@ -51,7 +61,7 @@ export default function ConversationList({ conversations, activeId, loading, cur
 			<div className="flex-1 overflow-y-auto">
 				{loading ? (
 					<div className="flex items-center justify-center py-12">
-						<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-primary-500" />
+						<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-sky-400" />
 					</div>
 				) : filtered.length === 0 ? (
 					<div className="px-4 py-12 text-center">
@@ -78,7 +88,7 @@ export default function ConversationList({ conversations, activeId, loading, cur
 									onClick={() => onSelect(conv.id)}
 									className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-150 mb-0.5 ${
 										isActive
-											? "bg-primary-50 dark:bg-primary-900/20"
+											? "bg-sky-50 dark:bg-sky-900/20"
 											: "hover:bg-gray-50 dark:hover:bg-gray-700/50"
 									}`}
 								>
@@ -91,7 +101,7 @@ export default function ConversationList({ conversations, activeId, loading, cur
 												className="h-12 w-12 rounded-full object-cover"
 											/>
 										) : (
-											<div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-sm font-bold text-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400">
+											<div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 to-sky-100 text-sm font-bold text-sky-600 dark:from-sky-900/50 dark:to-sky-800/50 dark:text-sky-400">
 												{otherUser?.name?.charAt(0).toUpperCase() || "?"}
 											</div>
 										)}
@@ -130,7 +140,7 @@ export default function ConversationList({ conversations, activeId, loading, cur
 													: "Start a conversation"}
 											</p>
 											{conv.unreadCount > 0 && (
-												<span className="ml-2 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">
+												<span className="ml-2 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-sky-400 px-1.5 text-[10px] font-bold text-white">
 													{conv.unreadCount}
 												</span>
 											)}

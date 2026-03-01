@@ -178,7 +178,7 @@ export default function ChatWindow({
 			<div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
 				<button
 					onClick={onBack}
-					className="md:hidden flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors dark:hover:bg-gray-700"
+					className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors dark:hover:bg-gray-700"
 				>
 					<FiArrowLeft size={20} />
 				</button>
@@ -192,7 +192,7 @@ export default function ChatWindow({
 								className="h-10 w-10 rounded-full object-cover"
 							/>
 						) : (
-							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-sm font-bold text-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400">
+							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 to-sky-100 text-sm font-bold text-sky-600 dark:from-sky-900/50 dark:to-sky-800/50 dark:text-sky-400">
 								{otherUser?.name?.charAt(0).toUpperCase() || "?"}
 							</div>
 						)}
@@ -206,7 +206,7 @@ export default function ChatWindow({
 						</p>
 						<p className="text-xs text-gray-400 dark:text-gray-500">
 							{isTyping ? (
-								<span className="text-primary-500 font-medium">typing...</span>
+								<span className="text-sky-400 font-medium">typing...</span>
 							) : online ? (
 								<span className="text-green-500">Online</span>
 							) : (
@@ -225,7 +225,7 @@ export default function ChatWindow({
 			>
 				{loading && messages.length === 0 ? (
 					<div className="flex items-center justify-center py-12">
-						<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-primary-500" />
+						<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-sky-400" />
 					</div>
 				) : messages.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-12 text-gray-400">
@@ -237,7 +237,7 @@ export default function ChatWindow({
 									className="h-16 w-16 rounded-full object-cover"
 								/>
 							) : (
-								<span className="text-2xl font-bold text-primary-500">
+								<span className="text-2xl font-bold text-sky-400">
 									{otherUser?.name?.charAt(0).toUpperCase()}
 								</span>
 							)}
@@ -293,7 +293,7 @@ export default function ChatWindow({
 											<div
 												className={`group relative rounded-2xl px-3.5 py-2 ${
 													isMine
-														? "bg-primary-500 text-white rounded-br-md"
+														? "bg-sky-400 text-white rounded-br-md"
 														: "bg-gray-100 text-gray-800 rounded-bl-md dark:bg-gray-700 dark:text-gray-100"
 												}`}
 											>
@@ -412,7 +412,7 @@ export default function ChatWindow({
 					<button
 						onClick={handleSend}
 						disabled={!input.trim()}
-						className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-sm transition-all duration-200 hover:from-primary-600 hover:to-primary-700 hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+						className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-sky-400 to-blue-400 text-white shadow-sm transition-all duration-200 hover:from-sky-500 hover:to-blue-500 hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
 					>
 						<FiSend size={18} className="translate-x-px" />
 					</button>

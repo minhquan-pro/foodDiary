@@ -378,7 +378,7 @@ export default function ProfilePage() {
 												)}
 											</button>
 											<button
-												onClick={() => navigate(`/chat?userId=${id}`)}
+												onClick={() => window.__openChatWithUser?.(id)}
 												className="btn-outline text-sm shrink-0"
 											>
 												<FiMessageSquare size={15} className="mr-1.5" /> Message

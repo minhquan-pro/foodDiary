@@ -15,7 +15,7 @@ import FeedPage from "../features/feed/FeedPage.jsx";
 import PostDetailPage from "../features/posts/PostDetailPage.jsx";
 import SharedPostPage from "../features/posts/SharedPostPage.jsx";
 import ProfilePage from "../features/profile/ProfilePage.jsx";
-import ChatPage from "../features/chat/ChatPage.jsx";
+import ChatWidget from "../components/ChatWidget.jsx";
 
 export default function App() {
 	const dispatch = useDispatch();
@@ -66,16 +66,9 @@ export default function App() {
 							</ProtectedRoute>
 						}
 					/>
-					<Route
-						path="/chat"
-						element={
-							<ProtectedRoute>
-								<ChatPage />
-							</ProtectedRoute>
-						}
-					/>
 				</Routes>
 			</main>
+			<ChatWidget />
 		</div>
 	);
 }

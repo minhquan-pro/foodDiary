@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice.js";
 import { useTheme } from "../context/ThemeContext.jsx";
-import { FiHome, FiPlus, FiUser, FiLogOut, FiSearch, FiSun, FiMoon, FiMessageSquare } from "react-icons/fi";
-import { useSocket } from "../context/SocketContext.jsx";
-import { fetchUnreadCount, incrementUnread, addMessage } from "../features/chat/chatSlice.js";
+import { FiHome, FiPlus, FiUser, FiLogOut, FiSearch, FiSun, FiMoon } from "react-icons/fi";
 import CreatePostModal from "./CreatePostModal.jsx";
 
 export default function Navbar() {
@@ -14,30 +12,7 @@ export default function Navbar() {
 	const location = useLocation();
 	const { user } = useSelector((state) => state.auth);
 	const { theme, toggleTheme } = useTheme();
-	const { socket } = useSocket();
-	const { unreadCount, activeConversationId } = useSelector((state) => state.chat);
 	const [showCreateModal, setShowCreateModal] = useState(false);
-
-	useEffect(() => {
-		if (user) dispatch(fetchUnreadCount());
-	}, [user, dispatch]);
-
-	// Global listener for incoming messages (updates unread badge even outside ChatPage)
-	useEffect(() => {
-		if (!socket || !user) return;
-
-		const handleNewMessage = ({ conversationId, message }) => {
-			if (message.sender.id === user.id) return;
-
-			// If user is not currently viewing this conversation, increment unread
-			if (conversationId !== activeConversationId) {
-				dispatch(incrementUnread({ conversationId }));
-			}
-		};
-
-		socket.on("chat:newMessage", handleNewMessage);
-		return () => socket.off("chat:newMessage", handleNewMessage);
-	}, [socket, user, activeConversationId, dispatch]);
 
 	const handleLogout = () => {
 		dispatch(logout());
@@ -81,16 +56,6 @@ export default function Navbar() {
 									<span className="hidden sm:inline">Home</span>
 								</Link>
 
-								<Link to="/chat" className={`${navLinkClass("/chat")} relative`}>
-									<FiMessageSquare size={18} />
-									<span className="hidden sm:inline">Chat</span>
-									{unreadCount > 0 && (
-										<span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-											{unreadCount > 99 ? "99+" : unreadCount}
-										</span>
-									)}
-								</Link>
-
 								<Link to={`/profile/${user.id}`} className={navLinkClass(`/profile/${user.id}`)}>
 									{user.avatarUrl ? (
 										<img
@@ -125,7 +90,7 @@ export default function Navbar() {
 				<button
 					onClick={() => setShowCreateModal(true)}
 					title="New Review"
-					className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg hover:from-primary-600 hover:to-primary-700 hover:shadow-xl hover:scale-110 active:scale-95 transition-all duration-200"
+					className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-lg hover:from-emerald-500 hover:to-teal-600 hover:shadow-xl hover:scale-110 active:scale-95 transition-all duration-200"
 				>
 					<FiPlus size={26} strokeWidth={2.5} />
 				</button>
