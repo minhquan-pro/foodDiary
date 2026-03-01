@@ -75,6 +75,16 @@ export const toggleReaction = catchAsync(async (req, res) => {
 });
 
 /**
+ * DELETE /api/chat/conversations/:id
+ */
+export const deleteConversation = catchAsync(async (req, res) => {
+	const { id } = req.params;
+	const deleted = await chatService.deleteConversation(id, req.user.id);
+	if (!deleted) throw ApiError.forbidden("Not a member of this conversation");
+	res.json({ success: true });
+});
+
+/**
  * GET /api/chat/unread-count
  */
 export const getUnreadCount = catchAsync(async (req, res) => {

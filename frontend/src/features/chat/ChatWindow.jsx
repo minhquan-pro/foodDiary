@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { addMessage, updateMessageReactions } from "./chatSlice.js";
-import { FiArrowLeft, FiSend, FiSmile, FiMoreVertical, FiHeart } from "react-icons/fi";
+import { addMessage, updateMessageReactions, deleteConversation } from "./chatSlice.js";
+import { FiArrowLeft, FiSend, FiSmile, FiMoreVertical, FiHeart, FiTrash2 } from "react-icons/fi";
 
 function formatMessageTime(dateStr) {
 	const date = new Date(dateStr);
@@ -40,10 +40,13 @@ export default function ChatWindow({
 	const dispatch = useDispatch();
 	const [input, setInput] = useState("");
 	const [isTyping, setIsTyping] = useState(false);
+	const [menuOpen, setMenuOpen] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const messagesEndRef = useRef(null);
 	const messagesContainerRef = useRef(null);
 	const typingTimeoutRef = useRef(null);
 	const prevMessagesLenRef = useRef(0);
+	const menuRef = useRef(null);
 
 	const otherUser = conversation.otherUser;
 	const online = otherUser && isUserOnline(otherUser.id);
@@ -172,6 +175,23 @@ export default function ChatWindow({
 		}
 	};
 
+	// Close menu on outside click
+	useEffect(() => {
+		const handler = (e) => {
+			if (menuRef.current && !menuRef.current.contains(e.target)) {
+				setMenuOpen(false);
+			}
+		};
+		if (menuOpen) document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [menuOpen]);
+
+	const handleDeleteChat = () => {
+		dispatch(deleteConversation(conversation.id));
+		setShowDeleteModal(false);
+		onBack?.();
+	};
+
 	return (
 		<div className="flex h-full flex-col">
 			{/* Header */}
@@ -215,6 +235,30 @@ export default function ChatWindow({
 						</p>
 					</div>
 				</Link>
+
+				{/* Three-dot menu */}
+				<div className="relative" ref={menuRef}>
+					<button
+						onClick={() => setMenuOpen(!menuOpen)}
+						className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors dark:hover:bg-gray-700 dark:hover:text-gray-300"
+					>
+						<FiMoreVertical size={18} />
+					</button>
+					{menuOpen && (
+						<div className="absolute right-0 top-10 z-40 w-44 rounded-xl bg-white border border-gray-200 shadow-lg py-1 animate-fade-in dark:bg-gray-800 dark:border-gray-700">
+							<button
+								onClick={() => {
+									setMenuOpen(false);
+									setShowDeleteModal(true);
+								}}
+								className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors dark:text-red-400 dark:hover:bg-red-900/20"
+							>
+								<FiTrash2 size={15} />
+								Delete chat
+							</button>
+						</div>
+					)}
+				</div>
 			</div>
 
 			{/* Messages */}
@@ -418,6 +462,41 @@ export default function ChatWindow({
 					</button>
 				</div>
 			</div>
+
+			{/* Delete Confirmation Modal */}
+			{showDeleteModal && (
+				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+					<div
+						className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+						onClick={() => setShowDeleteModal(false)}
+					/>
+					<div className="relative w-full max-w-xs rounded-2xl bg-white shadow-xl animate-slide-up dark:bg-gray-800">
+						<div className="px-6 py-5 text-center">
+							<div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+								<FiTrash2 size={22} className="text-red-500" />
+							</div>
+							<h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Delete conversation?</h3>
+							<p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+								This will permanently delete all messages. This action cannot be undone.
+							</p>
+						</div>
+						<div className="flex items-center gap-2.5 border-t border-gray-100 px-6 py-4 dark:border-gray-700">
+							<button
+								onClick={() => setShowDeleteModal(false)}
+								className="flex-1 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleDeleteChat}
+								className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 transition-colors"
+							>
+								Delete
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

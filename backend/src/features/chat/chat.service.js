@@ -192,6 +192,19 @@ export async function toggleMessageReaction(messageId, userId, emoji = "❤️")
 	return message;
 }
 
+/**
+ * Delete a conversation (only if user is a member).
+ */
+export async function deleteConversation(conversationId, userId) {
+	const member = await prisma.conversationMember.findUnique({
+		where: { conversationId_userId: { conversationId, userId } },
+	});
+	if (!member) return false;
+
+	await prisma.conversation.delete({ where: { id: conversationId } });
+	return true;
+}
+
 // ─── Helpers ────────────────────────────────────────────────
 
 function formatConversation(conv, currentUserId) {

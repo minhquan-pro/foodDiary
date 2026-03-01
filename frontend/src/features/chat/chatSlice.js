@@ -43,6 +43,18 @@ export const fetchUnreadCount = createAsyncThunk("chat/fetchUnreadCount", async 
 	}
 });
 
+export const deleteConversation = createAsyncThunk(
+	"chat/deleteConversation",
+	async (conversationId, { rejectWithValue }) => {
+		try {
+			await api.delete(`/chat/conversations/${conversationId}`);
+			return conversationId;
+		} catch (err) {
+			return rejectWithValue(err.message);
+		}
+	},
+);
+
 // ─── Slice ───────────────────────────────────────────────────
 
 const initialState = {
@@ -156,6 +168,19 @@ const chatSlice = createSlice({
 			// fetchUnreadCount
 			.addCase(fetchUnreadCount.fulfilled, (state, action) => {
 				state.unreadCount = action.payload;
+			})
+			// deleteConversation
+			.addCase(deleteConversation.fulfilled, (state, action) => {
+				const id = action.payload;
+				const conv = state.conversations.find((c) => c.id === id);
+				if (conv) {
+					state.unreadCount = Math.max(0, state.unreadCount - (conv.unreadCount || 0));
+				}
+				state.conversations = state.conversations.filter((c) => c.id !== id);
+				delete state.messages[id];
+				if (state.activeConversationId === id) {
+					state.activeConversationId = null;
+				}
 			});
 	},
 });

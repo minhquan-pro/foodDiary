@@ -422,7 +422,11 @@ export default function ProfilePage() {
 				</div>
 
 				{/* Bio */}
-				{profile.bio && <p className="mt-3 text-sm text-gray-500 max-w-xl dark:text-gray-400">{profile.bio}</p>}
+				{profile.bio && (
+					<p className="mt-4 text-base font-semibold text-gray-700 max-w-xl dark:text-gray-300">
+						{profile.bio}
+					</p>
+				)}
 
 				{/* Social Links */}
 				{(() => {
