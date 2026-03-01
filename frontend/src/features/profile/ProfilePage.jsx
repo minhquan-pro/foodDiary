@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
 	fetchProfile,
@@ -29,12 +29,14 @@ import {
 	FiSlash,
 	FiFlag,
 	FiMoreHorizontal,
+	FiMessageSquare,
 } from "react-icons/fi";
 import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaGithub } from "react-icons/fa6";
 import toast from "react-hot-toast";
 
 export default function ProfilePage() {
 	const { id } = useParams();
+	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const { user: profile, posts, pagination, isFollowing, isBlocked, loading } = useSelector((state) => state.profile);
 	const { user: currentUser } = useSelector((state) => state.auth);
@@ -360,20 +362,28 @@ export default function ProfilePage() {
 											<FiSlash size={15} className="mr-1.5" /> Unblock
 										</button>
 									) : (
-										<button
-											onClick={handleFollow}
-											className={`text-sm shrink-0 ${isFollowing ? "btn-secondary" : "btn-primary"}`}
-										>
-											{isFollowing ? (
-												<>
-													<FiUserCheck size={15} className="mr-1.5" /> Following
-												</>
-											) : (
-												<>
-													<FiUserPlus size={15} className="mr-1.5" /> Follow
-												</>
-											)}
-										</button>
+										<>
+											<button
+												onClick={handleFollow}
+												className={`text-sm shrink-0 ${isFollowing ? "btn-secondary" : "btn-primary"}`}
+											>
+												{isFollowing ? (
+													<>
+														<FiUserCheck size={15} className="mr-1.5" /> Following
+													</>
+												) : (
+													<>
+														<FiUserPlus size={15} className="mr-1.5" /> Follow
+													</>
+												)}
+											</button>
+											<button
+												onClick={() => navigate(`/chat?userId=${id}`)}
+												className="btn-outline text-sm shrink-0"
+											>
+												<FiMessageSquare size={15} className="mr-1.5" /> Message
+											</button>
+										</>
 									)}
 									{/* Three-dot menu */}
 									<div className="relative">
@@ -469,7 +479,7 @@ export default function ProfilePage() {
 				})()}
 
 				{/* Stats */}
-				<div className="mt-5 flex gap-6 border-b border-gray-200 pb-5 dark:border-gray-700">
+				<div className="mt-5 flex gap-6 border-b items-center border-gray-200 pb-5 dark:border-gray-700">
 					<div className="text-center">
 						<span className="text-lg font-bold text-gray-900 dark:text-gray-100">{postCount}</span>
 						<span className="ml-1.5 text-sm text-gray-500 dark:text-gray-400">reviews</span>

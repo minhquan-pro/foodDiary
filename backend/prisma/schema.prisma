@@ -46,6 +46,10 @@ model User {
     // Reports against this user
     reportsAgainst Report[] @relation("reported")
 
+    // Chat system
+    conversationMembers ConversationMember[]
+    sentMessages        Message[]
+
     @@map("users")
 }
 
@@ -163,4 +167,54 @@ model Report {
     @@index([reportedId])
     @@index([status])
     @@map("reports")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Conversation (1-on-1 chat)
+// ─────────────────────────────────────────────────────────────
+model Conversation {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    members  ConversationMember[]
+    messages Message[]
+
+    @@map("conversations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ConversationMember (participants in a conversation)
+// ─────────────────────────────────────────────────────────────
+model ConversationMember {
+    id             String   @id @default(uuid())
+    conversationId String   @map("conversation_id")
+    userId         String   @map("user_id")
+    createdAt      DateTime @default(now()) @map("created_at")
+
+    conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([conversationId, userId])
+    @@index([userId])
+    @@map("conversation_members")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Message (chat messages)
+// ─────────────────────────────────────────────────────────────
+model Message {
+    id             String   @id @default(uuid())
+    body           String
+    conversationId String   @map("conversation_id")
+    senderId       String   @map("sender_id")
+    read           Boolean  @default(false)
+    createdAt      DateTime @default(now()) @map("created_at")
+
+    conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+    @@index([conversationId])
+    @@index([senderId])
+    @@map("messages")
 }

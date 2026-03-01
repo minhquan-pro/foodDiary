@@ -4,9 +4,12 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 import config from "./config/index.js";
 import errorHandler from "./middleware/errorHandler.js";
+import { setupSocket } from "./socket.js";
 
 // Feature routes
 import authRoutes from "./features/auth/auth.routes.js";
@@ -16,11 +19,22 @@ import commentsRoutes from "./features/comments/comments.routes.js";
 import usersRoutes from "./features/users/users.routes.js";
 import blocksRoutes from "./features/blocks/blocks.routes.js";
 import reportsRoutes from "./features/reports/reports.routes.js";
+import chatRoutes from "./features/chat/chat.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const httpServer = createServer(app);
+
+// ─── Socket.IO Setup ────────────────────────────────────────
+const io = new Server(httpServer, {
+	cors: {
+		origin: config.clientUrl,
+		credentials: true,
+	},
+});
+setupSocket(io);
 
 // ─── Global Middleware ───────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
@@ -40,6 +54,7 @@ app.use("/api/comments", commentsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/blocks", blocksRoutes);
 app.use("/api/reports", reportsRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
@@ -55,8 +70,8 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 // ─── Start Server ────────────────────────────────────────────
-app.listen(config.port, () => {
-	console.log(`🚀 FoodDiary API running on port ${config.port} (${config.nodeEnv})`);
+httpServer.listen(config.port, () => {
+	console.log(`🚀 FoodShare API running on port ${config.port} (${config.nodeEnv})`);
 });
 
 export default app;

@@ -3,6 +3,7 @@ import authReducer from "../features/auth/authSlice.js";
 import feedReducer from "../features/feed/feedSlice.js";
 import postsReducer from "../features/posts/postsSlice.js";
 import profileReducer from "../features/profile/profileSlice.js";
+import chatReducer from "../features/chat/chatSlice.js";
 
 export const store = configureStore({
 	reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
 		feed: feedReducer,
 		posts: postsReducer,
 		profile: profileReducer,
+		chat: chatReducer,
 	},
 	devTools: import.meta.env.DEV,
 });
