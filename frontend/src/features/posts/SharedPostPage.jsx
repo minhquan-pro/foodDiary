@@ -38,7 +38,7 @@ export default function SharedPostPage() {
 								className="h-11 w-11 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-700"
 							/>
 						) : (
-						<div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-sm font-bold text-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400">
+							<div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-sm font-bold text-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400">
 								{post.user.name.charAt(0).toUpperCase()}
 							</div>
 						)}

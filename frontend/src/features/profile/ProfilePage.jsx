@@ -332,12 +332,36 @@ export default function ProfilePage() {
 				{/* Social Links */}
 				{(() => {
 					const socials = [
-						{ key: "facebook", icon: FaFacebookF, color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20" },
-						{ key: "instagram", icon: FaInstagram, color: "text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20" },
-						{ key: "twitter", icon: FaXTwitter, color: "text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800" },
-						{ key: "tiktok", icon: FaTiktok, color: "text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800" },
-						{ key: "youtube", icon: FaYoutube, color: "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" },
-						{ key: "github", icon: FaGithub, color: "text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800" },
+						{
+							key: "facebook",
+							icon: FaFacebookF,
+							color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+						},
+						{
+							key: "instagram",
+							icon: FaInstagram,
+							color: "text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20",
+						},
+						{
+							key: "twitter",
+							icon: FaXTwitter,
+							color: "text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800",
+						},
+						{
+							key: "tiktok",
+							icon: FaTiktok,
+							color: "text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800",
+						},
+						{
+							key: "youtube",
+							icon: FaYoutube,
+							color: "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20",
+						},
+						{
+							key: "github",
+							icon: FaGithub,
+							color: "text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800",
+						},
 					];
 					const activeSocials = socials.filter(({ key }) => profile[key]);
 					if (activeSocials.length === 0) return null;

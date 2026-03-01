@@ -17,7 +17,11 @@ export default function StarRating({ rating, onChange, readOnly = false, size = 
 				>
 					<FiStar
 						size={starSize}
-						className={star <= rating ? "fill-yellow-400 text-yellow-400 drop-shadow-sm" : "text-gray-300 dark:text-gray-600"}
+						className={
+							star <= rating
+								? "fill-yellow-400 text-yellow-400 drop-shadow-sm"
+								: "text-gray-300 dark:text-gray-600"
+						}
 					/>
 				</button>
 			))}

@@ -314,7 +314,7 @@ export default function PostDetailPage() {
 											className="h-9 w-9 rounded-full object-cover ring-2 ring-gray-100 shrink-0 dark:ring-gray-700"
 										/>
 									) : (
-									<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-xs font-bold text-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400">
+										<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-xs font-bold text-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400">
 											{currentUser?.name?.charAt(0).toUpperCase()}
 										</div>
 									)}
