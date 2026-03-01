@@ -12,7 +12,6 @@ import Spinner from "../components/Spinner.jsx";
 import LoginPage from "../features/auth/LoginPage.jsx";
 import RegisterPage from "../features/auth/RegisterPage.jsx";
 import FeedPage from "../features/feed/FeedPage.jsx";
-import CreatePostPage from "../features/posts/CreatePostPage.jsx";
 import PostDetailPage from "../features/posts/PostDetailPage.jsx";
 import SharedPostPage from "../features/posts/SharedPostPage.jsx";
 import ProfilePage from "../features/profile/ProfilePage.jsx";
@@ -49,14 +48,7 @@ export default function App() {
 							</ProtectedRoute>
 						}
 					/>
-					<Route
-						path="/create"
-						element={
-							<ProtectedRoute>
-								<CreatePostPage />
-							</ProtectedRoute>
-						}
-					/>
+
 					<Route
 						path="/posts/:id"
 						element={
