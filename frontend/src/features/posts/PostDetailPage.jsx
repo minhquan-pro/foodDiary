@@ -9,6 +9,8 @@ import {
 	deleteComment,
 	deletePost,
 	toggleCommentLike,
+	updateCurrentPostReactions,
+	setCurrentPostUserReaction,
 } from "./postsSlice.js";
 import StarRating from "../../components/StarRating.jsx";
 import Spinner from "../../components/Spinner.jsx";
@@ -24,9 +26,23 @@ import {
 	FiArrowLeft,
 	FiClock,
 	FiCornerDownRight,
+	FiSmile,
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import api from "../../lib/api.js";
+import { useRef } from "react";
+
+const EMOJIS = ["❤️", "😂", "🔥", "👍", "😮", "😢"];
+const EMOJI_LABELS = { "❤️": "Love", "😂": "Haha", "🔥": "Fire", "👍": "Like", "😮": "Wow", "😢": "Sad" };
+const EMOJI_COLORS = {
+	"❤️": "#ef4444",
+	"😂": "#eab308",
+	"🔥": "#f97316",
+	"👍": "#3b82f6",
+	"😮": "#eab308",
+	"😢": "#60a5fa",
+};
 
 function timeAgo(dateStr) {
 	const now = new Date();
@@ -186,9 +202,58 @@ export default function PostDetailPage() {
 	const { id } = useParams();
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
-	const { currentPost: post, comments, likedCommentIds, isPostLiked, loading } = useSelector((state) => state.posts);
+	const { currentPost: post, comments, likedCommentIds, isPostLiked, userReaction, loading } = useSelector(
+		(state) => state.posts,
+	);
 	const { user: currentUser } = useSelector((state) => state.auth);
 	const [commentText, setCommentText] = useState("");
+	const [showPicker, setShowPicker] = useState(false);
+	const pickerLeaveTimer = useRef(null);
+
+	const handleEmojiClick = async (emoji) => {
+		if (!currentUser) {
+			toast.error("Please login to react");
+			return;
+		}
+		const prevReaction = userReaction;
+		const nextReaction = prevReaction === emoji ? null : emoji;
+
+		dispatch(setCurrentPostUserReaction(nextReaction));
+
+		const current = (post?.reactions || []).map((r) => ({ ...r }));
+		let next = [...current];
+		if (prevReaction) {
+			const oldIdx = next.findIndex((r) => r.emoji === prevReaction);
+			if (oldIdx !== -1) {
+				next[oldIdx] = { ...next[oldIdx], count: next[oldIdx].count - 1 };
+				if (next[oldIdx].count <= 0) next.splice(oldIdx, 1);
+			}
+		}
+		if (nextReaction) {
+			const newIdx = next.findIndex((r) => r.emoji === nextReaction);
+			if (newIdx !== -1) {
+				next[newIdx] = { ...next[newIdx], count: next[newIdx].count + 1 };
+			} else {
+				next.push({ emoji: nextReaction, count: 1 });
+			}
+		}
+		dispatch(updateCurrentPostReactions({ postId: post.id, reactions: next }));
+
+		try {
+			await api.post(`/posts/${post.id}/reactions`, { emoji });
+		} catch (err) {
+			toast.error(err.message || "Failed to react");
+			dispatch(setCurrentPostUserReaction(prevReaction));
+		}
+	};
+
+	const handlePickerMouseEnter = () => {
+		clearTimeout(pickerLeaveTimer.current);
+		setShowPicker(true);
+	};
+	const handlePickerMouseLeave = () => {
+		pickerLeaveTimer.current = setTimeout(() => setShowPicker(false), 250);
+	};
 
 	useEffect(() => {
 		dispatch(fetchPost(id));
@@ -309,7 +374,8 @@ export default function PostDetailPage() {
 							</p>
 
 							{/* Actions */}
-							<div className="mt-6 flex items-center gap-2 border-t border-gray-100 pt-4 dark:border-gray-700">
+							<div className="mt-6 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 dark:border-gray-700">
+								{/* Like */}
 								<button
 									onClick={handleLike}
 									className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
@@ -332,6 +398,65 @@ export default function PostDetailPage() {
 									)}
 									<span>{post._count?.likes || 0}</span>
 								</button>
+
+								{/* Reaction button (hover picker) */}
+								<div className="relative flex items-center gap-2">
+									<div
+										className="relative"
+										onMouseEnter={handlePickerMouseEnter}
+										onMouseLeave={handlePickerMouseLeave}
+									>
+										{showPicker && (
+											<div
+												className="absolute bottom-11 left-0 z-40 flex items-center gap-0.5 rounded-full bg-white shadow-xl border border-gray-100 px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700 animate-fade-in"
+												onMouseEnter={handlePickerMouseEnter}
+												onMouseLeave={handlePickerMouseLeave}
+											>
+												{EMOJIS.map((e) => (
+													<button
+														key={e}
+														onClick={() => { handleEmojiClick(e); setShowPicker(false); }}
+														title={EMOJI_LABELS[e]}
+														className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 hover:bg-gray-50 dark:hover:bg-gray-700 ${userReaction === e ? "scale-110 bg-gray-100 dark:bg-gray-700" : ""}`}
+													>
+														{e}
+													</button>
+												))}
+											</div>
+										)}
+										<button
+											onClick={() => handleEmojiClick(userReaction || "❤️")}
+											className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-gray-700"
+											style={{ color: userReaction ? EMOJI_COLORS[userReaction] : undefined }}
+										>
+											{userReaction ? (
+												<span className="text-lg leading-none">{userReaction}</span>
+											) : (
+												<FiSmile size={18} className="text-gray-500 dark:text-gray-400" />
+											)}
+											<span className={userReaction ? "font-semibold" : "text-gray-500 dark:text-gray-400"}>
+												{userReaction ? EMOJI_LABELS[userReaction] : "React"}
+											</span>
+										</button>
+									</div>
+									{/* Reaction summary */}
+									{(post.reactions || []).length > 0 && (
+										<div className="flex items-center gap-1">
+											<div className="flex">
+												{[...(post.reactions || [])]
+													.sort((a, b) => b.count - a.count)
+													.slice(0, 3)
+													.map((r) => (
+														<span key={r.emoji} className="text-base -ml-0.5 first:ml-0 leading-none">{r.emoji}</span>
+													))}
+											</div>
+											<span className="text-sm text-gray-500 dark:text-gray-400">
+												{(post.reactions || []).reduce((sum, r) => sum + r.count, 0)}
+											</span>
+										</div>
+									)}
+								</div>
+
 								<span className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400">
 									<FiMessageCircle size={18} />
 									<span>{post._count?.comments || 0}</span>

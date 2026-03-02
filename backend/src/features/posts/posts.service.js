@@ -54,7 +54,7 @@ export const getFeed = async ({ page = 1, limit = 10, location = null, userId = 
 		}
 	}
 
-	const [posts, total] = await Promise.all([
+	let [posts, total] = await Promise.all([
 		prisma.post.findMany({
 			where,
 			orderBy: { createdAt: "desc" },
@@ -65,19 +65,29 @@ export const getFeed = async ({ page = 1, limit = 10, location = null, userId = 
 		prisma.post.count({ where }),
 	]);
 
-	// Get IDs of posts liked by the current user
+	// attach reactions counts
+	posts = await attachReactionsToPosts(posts);
+
+	// Get liked post IDs and user's reactions in parallel
 	let likedPostIds = [];
+	let userReactedPosts = {};
 	if (userId && posts.length > 0) {
-		const likes = await prisma.like.findMany({
-			where: { userId, postId: { in: posts.map((p) => p.id) } },
-			select: { postId: true },
-		});
+		const postIds = posts.map((p) => p.id);
+		const [likes, userRxs] = await Promise.all([
+			prisma.like.findMany({ where: { userId, postId: { in: postIds } }, select: { postId: true } }),
+			prisma.postReaction.findMany({
+				where: { userId, postId: { in: postIds } },
+				select: { postId: true, emoji: true },
+			}),
+		]);
 		likedPostIds = likes.map((l) => l.postId);
+		for (const r of userRxs) userReactedPosts[r.postId] = r.emoji;
 	}
 
 	return {
 		posts,
 		likedPostIds,
+		userReactedPosts,
 		pagination: {
 			page,
 			limit,
@@ -85,6 +95,25 @@ export const getFeed = async ({ page = 1, limit = 10, location = null, userId = 
 			totalPages: Math.ceil(total / limit),
 		},
 	};
+};
+
+// Helper to attach reaction counts to posts array
+const attachReactionsToPosts = async (posts) => {
+	if (!posts || posts.length === 0) return posts;
+	const postIds = posts.map((p) => p.id);
+	const groups = await prisma.postReaction.groupBy({
+		by: ["postId", "emoji"],
+		where: { postId: { in: postIds } },
+		_count: { emoji: true },
+	});
+
+	const map = {};
+	for (const g of groups) {
+		if (!map[g.postId]) map[g.postId] = [];
+		map[g.postId].push({ emoji: g.emoji, count: g._count.emoji });
+	}
+
+	return posts.map((p) => ({ ...p, reactions: map[p.id] || [] }));
 };
 
 /**
@@ -127,7 +156,7 @@ export const getFriendsFeed = async (userId, { page = 1, limit = 10 }) => {
 	// Filter out blocked users from following list
 	const followingIds = following.map((f) => f.followingId).filter((id) => !blockedIds.includes(id));
 
-	const [posts, total] = await Promise.all([
+	let [posts, total] = await Promise.all([
 		prisma.post.findMany({
 			where: { userId: { in: followingIds } },
 			orderBy: { createdAt: "desc" },
@@ -138,19 +167,29 @@ export const getFriendsFeed = async (userId, { page = 1, limit = 10 }) => {
 		prisma.post.count({ where: { userId: { in: followingIds } } }),
 	]);
 
-	// Get IDs of posts liked by the current user
+	// attach reactions counts
+	posts = await attachReactionsToPosts(posts);
+
+	// Get liked post IDs and user's reactions in parallel
 	let likedPostIds = [];
+	let userReactedPosts = {};
 	if (posts.length > 0) {
-		const likes = await prisma.like.findMany({
-			where: { userId, postId: { in: posts.map((p) => p.id) } },
-			select: { postId: true },
-		});
+		const postIds = posts.map((p) => p.id);
+		const [likes, userRxs] = await Promise.all([
+			prisma.like.findMany({ where: { userId, postId: { in: postIds } }, select: { postId: true } }),
+			prisma.postReaction.findMany({
+				where: { userId, postId: { in: postIds } },
+				select: { postId: true, emoji: true },
+			}),
+		]);
 		likedPostIds = likes.map((l) => l.postId);
+		for (const r of userRxs) userReactedPosts[r.postId] = r.emoji;
 	}
 
 	return {
 		posts,
 		likedPostIds,
+		userReactedPosts,
 		pagination: {
 			page,
 			limit,
@@ -163,7 +202,7 @@ export const getFriendsFeed = async (userId, { page = 1, limit = 10 }) => {
 /**
  * Get a single post by ID.
  */
-export const getPostById = async (postId) => {
+export const getPostById = async (postId, userId = null) => {
 	const post = await prisma.post.findUnique({
 		where: { id: postId },
 		include: {
@@ -195,7 +234,21 @@ export const getPostById = async (postId) => {
 	});
 
 	if (!post) throw ApiError.notFound("Post not found");
-	return post;
+	// attach reactions
+	const groups = await prisma.postReaction.groupBy({
+		by: ["emoji"],
+		where: { postId },
+		_count: { emoji: true },
+	});
+	post.reactions = groups.map((g) => ({ emoji: g.emoji, count: g._count.emoji }));
+
+	let userReaction = null;
+	if (userId) {
+		const ur = await prisma.postReaction.findFirst({ where: { postId, userId }, select: { emoji: true } });
+		userReaction = ur?.emoji ?? null;
+	}
+
+	return { post, userReaction };
 };
 
 /**
@@ -260,4 +313,52 @@ export const deletePost = async (postId, userId) => {
 	if (post.userId !== userId) throw ApiError.forbidden("You can only delete your own posts");
 
 	await prisma.post.delete({ where: { id: postId } });
+};
+
+/**
+ * Toggle a reaction (emoji) on a post by a user.
+ * Facebook-style: one reaction per user. Same emoji = remove, different emoji = switch.
+ */
+export const togglePostReaction = async (postId, userId, emoji = "❤️") => {
+	const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true, userId: true } });
+	if (!post) throw ApiError.notFound("Post not found");
+
+	// Find any existing reaction by this user (one per user, Facebook-style)
+	const existing = await prisma.postReaction.findFirst({ where: { userId, postId } });
+
+	if (existing) {
+		if (existing.emoji === emoji) {
+			// Same emoji → remove (toggle off)
+			await prisma.postReaction.delete({ where: { id: existing.id } });
+			return { removed: true, emoji };
+		}
+		// Different emoji → switch reaction
+		await prisma.postReaction.update({ where: { id: existing.id }, data: { emoji } });
+		return { removed: false, switched: true, prevEmoji: existing.emoji, emoji };
+	}
+
+	const created = await prisma.postReaction.create({ data: { userId, postId, emoji } });
+	return { removed: false, emoji, id: created.id };
+};
+
+/**
+ * Get reaction counts grouped by emoji for a post.
+ * Optionally indicate which emojis the given user has reacted with.
+ */
+export const getPostReactions = async (postId, userId = null) => {
+	const reactions = await prisma.postReaction.groupBy({
+		by: ["emoji"],
+		where: { postId },
+		_count: { emoji: true },
+	});
+
+	const result = reactions.map((r) => ({ emoji: r.emoji, count: r._count.emoji }));
+
+	let userReactions = [];
+	if (userId) {
+		const urs = await prisma.postReaction.findMany({ where: { postId, userId }, select: { emoji: true } });
+		userReactions = urs.map((u) => u.emoji);
+	}
+
+	return { reactions: result, userReactions };
 };

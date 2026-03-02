@@ -18,10 +18,12 @@ router.get("/restaurant-names", postsController.searchRestaurantNames);
 router.get("/feed", postsController.getFeed);
 router.get("/friends", postsController.getFriendsFeed);
 router.get("/:id", postsController.getPostById);
+router.get("/:id/reactions", postsController.getReactions);
 
 router.post("/", upload.single("image"), validate(createPostSchema), postsController.createPost);
 
 router.patch("/:id", validate(updatePostSchema), postsController.updatePost);
 router.delete("/:id", postsController.deletePost);
+router.post("/:id/reactions", postsController.toggleReaction);
 
 export default router;

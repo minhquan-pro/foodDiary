@@ -31,7 +31,7 @@ const httpServer = createServer(app);
 // ─── Socket.IO Setup ────────────────────────────────────────
 const io = new Server(httpServer, {
 	cors: {
-		origin: config.clientUrl,
+		origin: config.nodeEnv === "production" ? config.clientUrl : "*",
 		credentials: true,
 	},
 });
@@ -42,7 +42,7 @@ app.set("io", io);
 
 // ─── Global Middleware ───────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-app.use(cors({ origin: config.clientUrl, credentials: true }));
+app.use(cors({ origin: config.nodeEnv === "production" ? config.clientUrl : true, credentials: true }));
 app.use(morgan(config.nodeEnv === "production" ? "combined" : "dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

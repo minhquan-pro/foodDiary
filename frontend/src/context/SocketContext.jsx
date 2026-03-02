@@ -2,6 +2,9 @@ import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { io } from "socket.io-client";
 import { addNotification } from "../features/notifications/notificationsSlice.js";
+import { updatePostReactions } from "../features/feed/feedSlice.js";
+import { updateCurrentPostReactions } from "../features/posts/postsSlice.js";
+import { updateProfilePostReactions } from "../features/profile/profileSlice.js";
 import toast from "react-hot-toast";
 
 const SocketContext = createContext(null);
@@ -68,6 +71,13 @@ export function SocketProvider({ children }) {
 			} else if (notification.type === "follow") {
 				toast(`${actorName} started following you`, { icon: "👤" });
 			}
+		});
+
+		// Post reactions updates
+		newSocket.on("post:reactionUpdated", ({ postId, reactions }) => {
+			dispatch(updatePostReactions({ postId, reactions }));
+			dispatch(updateCurrentPostReactions({ postId, reactions }));
+			dispatch(updateProfilePostReactions({ postId, reactions }));
 		});
 
 		socketRef.current = newSocket;

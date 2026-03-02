@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\(''react-icons/fi''\\)\")",
+      "Bash(npx vite build)"
+    ]
+  }
+}

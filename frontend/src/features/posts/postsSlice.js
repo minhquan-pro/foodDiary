@@ -105,6 +105,7 @@ const initialState = {
 	commentsPagination: null,
 	likedCommentIds: [],
 	isPostLiked: false,
+	userReaction: null, // emoji string or null
 	loading: false,
 	error: null,
 };
@@ -119,6 +120,16 @@ const postsSlice = createSlice({
 			state.commentsPagination = null;
 			state.likedCommentIds = [];
 			state.isPostLiked = false;
+			state.userReaction = null;
+		},
+		updateCurrentPostReactions(state, action) {
+			const { postId, reactions } = action.payload;
+			if (state.currentPost && state.currentPost.id === postId) {
+				state.currentPost.reactions = reactions;
+			}
+		},
+		setCurrentPostUserReaction(state, action) {
+			state.userReaction = action.payload; // emoji or null
 		},
 	},
 	extraReducers: (builder) => {
@@ -148,6 +159,7 @@ const postsSlice = createSlice({
 				state.comments = post.comments || [];
 				state.likedCommentIds = action.payload.likedCommentIds || [];
 				state.isPostLiked = action.payload.isPostLiked || false;
+				state.userReaction = action.payload.userReaction ?? null;
 			})
 			.addCase(fetchPost.rejected, (state, action) => {
 				state.loading = false;
@@ -318,5 +330,5 @@ const postsSlice = createSlice({
 	},
 });
 
-export const { clearCurrentPost } = postsSlice.actions;
+export const { clearCurrentPost, updateCurrentPostReactions, setCurrentPostUserReaction } = postsSlice.actions;
 export default postsSlice.reducer;

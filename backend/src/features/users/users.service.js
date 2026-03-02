@@ -87,19 +87,23 @@ export const getUserPosts = async (userId, { page = 1, limit = 10 }, currentUser
 		prisma.post.count({ where: { userId } }),
 	]);
 
-	// Get IDs of posts liked by the current user
+	// Get liked post IDs and user's reactions in parallel
 	let likedPostIds = [];
+	let userReactedPosts = {};
 	if (currentUserId && posts.length > 0) {
-		const likes = await prisma.like.findMany({
-			where: { userId: currentUserId, postId: { in: posts.map((p) => p.id) } },
-			select: { postId: true },
-		});
+		const postIds = posts.map((p) => p.id);
+		const [likes, userRxs] = await Promise.all([
+			prisma.like.findMany({ where: { userId: currentUserId, postId: { in: postIds } }, select: { postId: true } }),
+			prisma.postReaction.findMany({ where: { userId: currentUserId, postId: { in: postIds } }, select: { postId: true, emoji: true } }),
+		]);
 		likedPostIds = likes.map((l) => l.postId);
+		for (const r of userRxs) userReactedPosts[r.postId] = r.emoji;
 	}
 
 	return {
 		posts,
 		likedPostIds,
+		userReactedPosts,
 		pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
 	};
 };

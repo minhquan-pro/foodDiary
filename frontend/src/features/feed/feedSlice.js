@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../lib/api.js";
 import { toggleLike, createPost } from "../posts/postsSlice.js";
+import { updateCurrentPostReactions as updatePostSliceReactions } from "../posts/postsSlice.js";
 
 // ─── Async Thunks ────────────────────────────────────────────
 
@@ -109,12 +110,20 @@ const initialState = {
 	followingIds: [],
 	blockedIds: [],
 	likedPostIds: [],
+	userReactedPosts: {}, // { [postId]: emoji }
 };
 
 const feedSlice = createSlice({
 	name: "feed",
 	initialState,
 	reducers: {
+		updatePostReactions(state, action) {
+			const { postId, reactions } = action.payload;
+			const post = state.posts.find((p) => p.id === postId);
+			if (post) {
+				post.reactions = reactions;
+			}
+		},
 		setFeedType(state, action) {
 			state.feedType = action.payload;
 			state.posts = [];
@@ -135,6 +144,14 @@ const feedSlice = createSlice({
 		removeOptimisticPost(state, action) {
 			state.posts = state.posts.filter((p) => p.id !== action.payload);
 		},
+		setFeedUserReaction(state, action) {
+			const { postId, emoji } = action.payload;
+			if (emoji == null) {
+				delete state.userReactedPosts[postId];
+			} else {
+				state.userReactedPosts[postId] = emoji;
+			}
+		},
 	},
 	extraReducers: (builder) => {
 		// Fetch latest feed
@@ -145,13 +162,15 @@ const feedSlice = createSlice({
 			})
 			.addCase(fetchFeed.fulfilled, (state, action) => {
 				state.loading = false;
-				const { posts, pagination, likedPostIds = [] } = action.payload;
+				const { posts, pagination, likedPostIds = [], userReactedPosts = {} } = action.payload;
 				if (pagination.page === 1) {
 					state.posts = posts;
 					state.likedPostIds = likedPostIds;
+					state.userReactedPosts = userReactedPosts;
 				} else {
 					state.posts = [...state.posts, ...posts];
 					state.likedPostIds = [...new Set([...state.likedPostIds, ...likedPostIds])];
+					state.userReactedPosts = { ...state.userReactedPosts, ...userReactedPosts };
 				}
 				state.pagination = pagination;
 			})
@@ -168,13 +187,15 @@ const feedSlice = createSlice({
 			})
 			.addCase(fetchFriendsFeed.fulfilled, (state, action) => {
 				state.loading = false;
-				const { posts, pagination, likedPostIds = [] } = action.payload;
+				const { posts, pagination, likedPostIds = [], userReactedPosts = {} } = action.payload;
 				if (pagination.page === 1) {
 					state.posts = posts;
 					state.likedPostIds = likedPostIds;
+					state.userReactedPosts = userReactedPosts;
 				} else {
 					state.posts = [...state.posts, ...posts];
 					state.likedPostIds = [...new Set([...state.likedPostIds, ...likedPostIds])];
+					state.userReactedPosts = { ...state.userReactedPosts, ...userReactedPosts };
 				}
 				state.pagination = pagination;
 			})
@@ -254,6 +275,6 @@ const feedSlice = createSlice({
 	},
 });
 
-export const { setFeedType, setSelectedLocation, clearFeed, addOptimisticPost, removeOptimisticPost } =
+export const { setFeedType, setSelectedLocation, clearFeed, addOptimisticPost, removeOptimisticPost, updatePostReactions, setFeedUserReaction } =
 	feedSlice.actions;
 export default feedSlice.reducer;

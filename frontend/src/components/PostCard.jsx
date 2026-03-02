@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useRef, useEffect } from "react";
 import {
-	FiHeart,
 	FiMessageCircle,
 	FiShare2,
 	FiMapPin,
@@ -11,14 +10,28 @@ import {
 	FiMoreHorizontal,
 	FiSlash,
 	FiFlag,
+	FiSmile,
 } from "react-icons/fi";
 import StarRating from "./StarRating.jsx";
 import ImageLightbox from "./ImageLightbox.jsx";
 import VerifiedBadge from "./VerifiedBadge.jsx";
 import CommentsModal from "./CommentsModal.jsx";
-import { toggleLike } from "../features/posts/postsSlice.js";
+import api from "../lib/api.js";
+import { updatePostReactions, setFeedUserReaction } from "../features/feed/feedSlice.js";
+import { updateProfilePostReactions, setProfileUserReaction } from "../features/profile/profileSlice.js";
 import { followFromFeed, blockFromFeed, reportFromFeed } from "../features/feed/feedSlice.js";
 import toast from "react-hot-toast";
+
+const EMOJIS = ["❤️", "😂", "🔥", "👍", "😮", "😢"];
+const EMOJI_LABELS = { "❤️": "Love", "😂": "Haha", "🔥": "Fire", "👍": "Like", "😮": "Wow", "😢": "Sad" };
+const EMOJI_COLORS = {
+	"❤️": "#ef4444",
+	"😂": "#eab308",
+	"🔥": "#f97316",
+	"👍": "#3b82f6",
+	"😮": "#eab308",
+	"😢": "#60a5fa",
+};
 
 function timeAgo(dateStr) {
 	const now = new Date();
@@ -37,19 +50,21 @@ function timeAgo(dateStr) {
 export default function PostCard({ post }) {
 	const dispatch = useDispatch();
 	const { user: currentUser } = useSelector((state) => state.auth);
-	const { followingIds, likedPostIds: feedLikedIds } = useSelector((state) => state.feed);
-	const { likedPostIds: profileLikedIds } = useSelector((state) => state.profile);
+	const { followingIds, userReactedPosts: feedReactedPosts } = useSelector((state) => state.feed);
+	const { userReactedPosts: profileReactedPosts } = useSelector((state) => state.profile);
 
 	const isOwnPost = currentUser?.id === post.user.id;
 	const isFollowing = followingIds.includes(post.user.id);
-	const isLiked = feedLikedIds.includes(post.id) || profileLikedIds.includes(post.id);
+	const userReaction = feedReactedPosts[post.id] ?? profileReactedPosts[post.id] ?? null;
 
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [commentsOpen, setCommentsOpen] = useState(false);
 	const [reportOpen, setReportOpen] = useState(false);
 	const [reportReason, setReportReason] = useState("spam");
 	const [reportDetails, setReportDetails] = useState("");
+	const [showPicker, setShowPicker] = useState(false);
 	const menuRef = useRef(null);
+	const pickerLeaveTimer = useRef(null);
 
 	// Close menu on outside click
 	useEffect(() => {
@@ -62,10 +77,6 @@ export default function PostCard({ post }) {
 		return () => document.removeEventListener("mousedown", handler);
 	}, [menuOpen]);
 
-	const handleLike = () => {
-		dispatch(toggleLike(post.id));
-	};
-
 	const handleFollow = (e) => {
 		e.preventDefault();
 		e.stopPropagation();
@@ -77,6 +88,69 @@ export default function PostCard({ post }) {
 		const shareUrl = `${window.location.origin}/share/${post.shareSlug}`;
 		navigator.clipboard.writeText(shareUrl);
 		toast.success("Share link copied to clipboard!");
+	};
+
+	const handleEmojiClick = async (emoji) => {
+		if (!currentUser) {
+			toast.error("Please login to react");
+			return;
+		}
+
+		const prevReaction = userReaction;
+		const nextReaction = prevReaction === emoji ? null : emoji;
+
+		// Optimistic: update user reaction state
+		dispatch(setFeedUserReaction({ postId: post.id, emoji: nextReaction }));
+		dispatch(setProfileUserReaction({ postId: post.id, emoji: nextReaction }));
+
+		// Optimistic: update reaction counts (one-per-user logic)
+		const current = (post.reactions || []).map((r) => ({ ...r }));
+		let next = [...current];
+
+		if (prevReaction) {
+			const oldIdx = next.findIndex((r) => r.emoji === prevReaction);
+			if (oldIdx !== -1) {
+				next[oldIdx] = { ...next[oldIdx], count: next[oldIdx].count - 1 };
+				if (next[oldIdx].count <= 0) next.splice(oldIdx, 1);
+			}
+		}
+		if (nextReaction) {
+			const newIdx = next.findIndex((r) => r.emoji === nextReaction);
+			if (newIdx !== -1) {
+				next[newIdx] = { ...next[newIdx], count: next[newIdx].count + 1 };
+			} else {
+				next.push({ emoji: nextReaction, count: 1 });
+			}
+		}
+
+		dispatch(updatePostReactions({ postId: post.id, reactions: next }));
+		dispatch(updateProfilePostReactions({ postId: post.id, reactions: next }));
+
+		try {
+			await api.post(`/posts/${post.id}/reactions`, { emoji });
+		} catch (err) {
+			toast.error(err.message || "Failed to react");
+			// Revert
+			dispatch(setFeedUserReaction({ postId: post.id, emoji: prevReaction }));
+			dispatch(setProfileUserReaction({ postId: post.id, emoji: prevReaction }));
+		}
+	};
+
+	const handleReactionBtnClick = () => {
+		if (userReaction) {
+			handleEmojiClick(userReaction); // remove current reaction
+		} else {
+			handleEmojiClick("❤️"); // default to love
+		}
+	};
+
+	const handlePickerMouseEnter = () => {
+		clearTimeout(pickerLeaveTimer.current);
+		setShowPicker(true);
+	};
+
+	const handlePickerMouseLeave = () => {
+		pickerLeaveTimer.current = setTimeout(() => setShowPicker(false), 250);
 	};
 
 	const handleBlock = () => {
@@ -92,6 +166,8 @@ export default function PostCard({ post }) {
 		setReportReason("spam");
 		setReportDetails("");
 	};
+
+	const totalReactions = (post.reactions || []).reduce((sum, r) => sum + r.count, 0);
 
 	return (
 		<div className="card group animate-fade-in h-full flex flex-col">
@@ -204,28 +280,74 @@ export default function PostCard({ post }) {
 
 				{/* Actions */}
 				<div className="mt-4 flex items-center gap-1 border-t border-gray-300 pt-3 dark:border-gray-700 p-3">
-					<button
-						onClick={handleLike}
-						className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all duration-200 ${
-							isLiked
-								? "text-red-500 bg-red-50 dark:bg-red-900/20"
-								: "text-gray-500 hover:text-red-500 hover:bg-red-50 dark:text-gray-400 dark:hover:bg-red-900/20"
-						}`}
-					>
-						{isLiked ? (
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								className="w-4 h-4"
+					{/* Reaction button (Facebook-style hover picker) */}
+					<div className="relative flex items-center gap-1.5">
+						<div
+							className="relative"
+							onMouseEnter={handlePickerMouseEnter}
+							onMouseLeave={handlePickerMouseLeave}
+						>
+							{/* Floating emoji picker */}
+							{showPicker && (
+								<div
+									className="absolute bottom-10 left-0 z-40 flex items-center gap-0.5 rounded-full bg-white shadow-xl border border-gray-100 px-2 py-1.5 dark:bg-gray-800 dark:border-gray-700 animate-fade-in"
+									onMouseEnter={handlePickerMouseEnter}
+									onMouseLeave={handlePickerMouseLeave}
+								>
+									{EMOJIS.map((e) => (
+										<button
+											key={e}
+											onClick={() => {
+												handleEmojiClick(e);
+												setShowPicker(false);
+											}}
+											title={EMOJI_LABELS[e]}
+											className={`w-9 h-9 text-xl flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 hover:bg-gray-50 dark:hover:bg-gray-700 ${
+												userReaction === e ? "scale-110 bg-gray-100 dark:bg-gray-700" : ""
+											}`}
+										>
+											{e}
+										</button>
+									))}
+								</div>
+							)}
+
+							{/* Main reaction button */}
+							<button
+								onClick={handleReactionBtnClick}
+								className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+								style={{ color: userReaction ? EMOJI_COLORS[userReaction] : undefined }}
 							>
-								<path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-							</svg>
-						) : (
-							<FiHeart size={16} />
+								{userReaction ? (
+									<span className="text-base leading-none">{userReaction}</span>
+								) : (
+									<FiSmile size={16} className="text-gray-500 dark:text-gray-400" />
+								)}
+								<span className={userReaction ? "font-semibold" : "text-gray-500 dark:text-gray-400"}>
+									{userReaction ? EMOJI_LABELS[userReaction] : "React"}
+								</span>
+							</button>
+						</div>
+
+						{/* Reaction counts summary */}
+						{totalReactions > 0 && (
+							<div className="flex items-center gap-0.5">
+								<div className="flex">
+									{[...(post.reactions || [])]
+										.sort((a, b) => b.count - a.count)
+										.slice(0, 3)
+										.map((r) => (
+											<span key={r.emoji} className="text-sm -ml-0.5 first:ml-0 leading-none">
+												{r.emoji}
+											</span>
+										))}
+								</div>
+								<span className="text-xs text-gray-500 dark:text-gray-400 ml-1">{totalReactions}</span>
+							</div>
 						)}
-						<span className="font-medium">{post._count?.likes || 0}</span>
-					</button>
+					</div>
+
+					{/* Comments button */}
 					<button
 						onClick={() => setCommentsOpen(true)}
 						className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-400 dark:hover:bg-primary-900/20 transition-all duration-200"

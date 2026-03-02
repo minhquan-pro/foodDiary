@@ -34,6 +34,7 @@ model User {
     likes            Like[]
     commentLikes     CommentLike[]
     messageReactions MessageReaction[]
+    postReactions    PostReaction[]
 
     // Social: who this user follows
     following Follow[] @relation("follower")
@@ -94,6 +95,7 @@ model Post {
     user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
     comments      Comment[]
     likes         Like[]
+    reactions     PostReaction[]
     notifications Notification[]
 
     @@index([userId])
@@ -266,6 +268,24 @@ model MessageReaction {
     @@unique([userId, messageId, emoji])
     @@index([messageId])
     @@map("message_reactions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PostReaction (emoji reactions on posts)
+// ─────────────────────────────────────────────────────────────
+model PostReaction {
+    id        String   @id @default(uuid())
+    emoji     String   @default("❤️")
+    userId    String   @map("user_id")
+    postId    String   @map("post_id")
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, postId, emoji])
+    @@index([postId])
+    @@map("post_reactions")
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
-import * as postsService from "./posts.service.js";
+// removed duplicate import
 import catchAsync from "../../utils/catchAsync.js";
 import { ApiError } from "../../utils/ApiError.js";
+import * as postsService from "./posts.service.js";
 
 export const createPost = catchAsync(async (req, res) => {
 	if (!req.file) throw ApiError.badRequest("Food image is required");
@@ -41,7 +42,7 @@ export const getFriendsFeed = catchAsync(async (req, res) => {
 });
 
 export const getPostById = catchAsync(async (req, res) => {
-	const post = await postsService.getPostById(req.params.id);
+	const { post, userReaction } = await postsService.getPostById(req.params.id, req.user?.id);
 
 	// Get liked comment IDs for current user
 	let likedCommentIds = [];
@@ -69,7 +70,7 @@ export const getPostById = catchAsync(async (req, res) => {
 		}
 	}
 
-	res.json({ success: true, data: { post, likedCommentIds, isPostLiked } });
+	res.json({ success: true, data: { post, likedCommentIds, isPostLiked, userReaction } });
 });
 
 export const getPostBySlug = catchAsync(async (req, res) => {
@@ -85,4 +86,32 @@ export const updatePost = catchAsync(async (req, res) => {
 export const deletePost = catchAsync(async (req, res) => {
 	await postsService.deletePost(req.params.id, req.user.id);
 	res.status(204).send();
+});
+
+export const toggleReaction = catchAsync(async (req, res) => {
+	const postId = req.params.id;
+	const { emoji } = req.body;
+	const userId = req.user.id;
+
+	const result = await postsService.togglePostReaction(postId, userId, emoji);
+
+	// Emit socket event so clients can update realtime
+	const io = req.app.get("io");
+	try {
+		const rx = await postsService.getPostReactions(postId, null);
+		// Emit to a post-specific room and globally
+		io.to(`post:${postId}`).emit("post:reactionUpdated", { postId, reactions: rx.reactions });
+		io.emit("post:reactionUpdated", { postId, reactions: rx.reactions });
+	} catch (err) {
+		console.error("Failed to emit reaction update", err);
+	}
+
+	res.json({ success: true, data: result });
+});
+
+export const getReactions = catchAsync(async (req, res) => {
+	const postId = req.params.id;
+	const userId = req.user?.id || null;
+	const data = await postsService.getPostReactions(postId, userId);
+	res.json({ success: true, data });
 });

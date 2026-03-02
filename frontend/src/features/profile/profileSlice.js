@@ -109,6 +109,7 @@ const initialState = {
 	posts: [],
 	pagination: null,
 	likedPostIds: [],
+	userReactedPosts: {}, // { [postId]: emoji }
 	isFollowing: false,
 	isBlocked: false,
 	loading: false,
@@ -124,8 +125,22 @@ const profileSlice = createSlice({
 			state.posts = [];
 			state.pagination = null;
 			state.likedPostIds = [];
+			state.userReactedPosts = {};
 			state.isFollowing = false;
 			state.isBlocked = false;
+		},
+		setProfileUserReaction(state, action) {
+			const { postId, emoji } = action.payload;
+			if (emoji == null) {
+				delete state.userReactedPosts[postId];
+			} else {
+				state.userReactedPosts[postId] = emoji;
+			}
+		},
+		updateProfilePostReactions(state, action) {
+			const { postId, reactions } = action.payload;
+			const post = state.posts.find((p) => p.id === postId);
+			if (post) post.reactions = reactions;
 		},
 	},
 	extraReducers: (builder) => {
@@ -146,13 +161,15 @@ const profileSlice = createSlice({
 
 		// Fetch user posts
 		builder.addCase(fetchUserPosts.fulfilled, (state, action) => {
-			const { posts, pagination, likedPostIds = [] } = action.payload;
+			const { posts, pagination, likedPostIds = [], userReactedPosts = {} } = action.payload;
 			if (pagination.page === 1) {
 				state.posts = posts;
 				state.likedPostIds = likedPostIds;
+				state.userReactedPosts = userReactedPosts;
 			} else {
 				state.posts = [...state.posts, ...posts];
 				state.likedPostIds = [...new Set([...state.likedPostIds, ...likedPostIds])];
+				state.userReactedPosts = { ...state.userReactedPosts, ...userReactedPosts };
 			}
 			state.pagination = pagination;
 		});
@@ -223,5 +240,5 @@ const profileSlice = createSlice({
 	},
 });
 
-export const { clearProfile } = profileSlice.actions;
+export const { clearProfile, setProfileUserReaction, updateProfilePostReactions } = profileSlice.actions;
 export default profileSlice.reducer;
