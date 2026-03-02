@@ -65,6 +65,8 @@ export function SocketProvider({ children }) {
 				toast(`${actorName} replied to your comment on "${postName}"`, { icon: "💬" });
 			} else if (notification.type === "comment") {
 				toast(`${actorName} commented on "${postName}"`, { icon: "💬" });
+			} else if (notification.type === "follow") {
+				toast(`${actorName} started following you`, { icon: "👤" });
 			}
 		});
 

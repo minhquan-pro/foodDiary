@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { FiBell, FiHeart, FiMessageCircle, FiCheck } from "react-icons/fi";
+import { FiBell, FiHeart, FiMessageCircle, FiCheck, FiUserPlus } from "react-icons/fi";
 import {
 	fetchNotifications,
 	fetchUnreadCount,
@@ -27,6 +27,8 @@ function NotificationItem({ notification, onRead, onClose }) {
 	const icon =
 		notification.type === "like" || notification.type === "comment_like" ? (
 			<FiHeart size={16} className="text-red-500" />
+		) : notification.type === "follow" ? (
+			<FiUserPlus size={16} className="text-green-500" />
 		) : (
 			<FiMessageCircle size={16} className="text-blue-500" />
 		);
@@ -38,11 +40,13 @@ function NotificationItem({ notification, onRead, onClose }) {
 				? `liked your comment on "${notification.post?.restaurantName || ""}"`
 				: notification.type === "reply"
 					? `replied to your comment on "${notification.post?.restaurantName || ""}"`
-					: `commented on your post "${notification.post?.restaurantName || ""}"`;
+					: notification.type === "follow"
+						? "started following you"
+						: `commented on your post "${notification.post?.restaurantName || ""}"`;
 
 	return (
 		<Link
-			to={`/posts/${notification.postId}`}
+			to={notification.type === "follow" ? `/profile/${notification.actorId}` : `/posts/${notification.postId}`}
 			onClick={() => {
 				if (!notification.read) onRead(notification.id);
 				onClose();

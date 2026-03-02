@@ -4,17 +4,7 @@ import { createPost } from "../features/posts/postsSlice.js";
 import { fetchFeed } from "../features/feed/feedSlice.js";
 import StarRating from "./StarRating.jsx";
 import toast from "react-hot-toast";
-import {
-	FiX,
-	FiUpload,
-	FiCamera,
-	FiMapPin,
-	FiStar,
-	FiFileText,
-	FiImage,
-	FiTrash2,
-	FiLoader,
-} from "react-icons/fi";
+import { FiX, FiUpload, FiCamera, FiMapPin, FiStar, FiFileText, FiImage, FiTrash2, FiLoader } from "react-icons/fi";
 import { MdMyLocation } from "react-icons/md";
 
 export default function CreatePostModal({ isOpen, onClose }) {

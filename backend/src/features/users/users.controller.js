@@ -1,4 +1,5 @@
 import * as usersService from "./users.service.js";
+import * as notificationsService from "../notifications/notifications.service.js";
 import catchAsync from "../../utils/catchAsync.js";
 
 export const getProfile = catchAsync(async (req, res) => {
@@ -20,6 +21,21 @@ export const updateProfile = catchAsync(async (req, res) => {
 
 export const followUser = catchAsync(async (req, res) => {
 	const result = await usersService.followUser(req.user.id, req.params.id);
+
+	// Send follow notification
+	if (req.user.id !== req.params.id) {
+		const notification = await notificationsService.createNotification({
+			type: "follow",
+			userId: req.params.id,
+			actorId: req.user.id,
+		});
+
+		if (notification) {
+			const io = req.app.get("io");
+			io.to(`user:${req.params.id}`).emit("notification:new", notification);
+		}
+	}
+
 	res.json({ success: true, data: result });
 });
 
