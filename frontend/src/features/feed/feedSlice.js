@@ -275,6 +275,13 @@ const feedSlice = createSlice({
 	},
 });
 
-export const { setFeedType, setSelectedLocation, clearFeed, addOptimisticPost, removeOptimisticPost, updatePostReactions, setFeedUserReaction } =
-	feedSlice.actions;
+export const {
+	setFeedType,
+	setSelectedLocation,
+	clearFeed,
+	addOptimisticPost,
+	removeOptimisticPost,
+	updatePostReactions,
+	setFeedUserReaction,
+} = feedSlice.actions;
 export default feedSlice.reducer;
