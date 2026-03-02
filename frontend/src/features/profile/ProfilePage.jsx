@@ -30,6 +30,7 @@ import {
 	FiFlag,
 	FiMoreHorizontal,
 	FiMessageSquare,
+	FiHeart,
 } from "react-icons/fi";
 import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaGithub } from "react-icons/fa6";
 import toast from "react-hot-toast";
@@ -166,6 +167,7 @@ export default function ProfilePage() {
 	const postCount = profile._count?.posts || 0;
 	const followerCount = profile._count?.followers || 0;
 	const followingCount = profile._count?.following || 0;
+	const friendsCount = profile._count?.friends || 0;
 
 	return (
 		<div className="animate-fade-in">
@@ -501,6 +503,13 @@ export default function ProfilePage() {
 					>
 						<span className="text-lg font-bold text-gray-900 dark:text-gray-100">{followingCount}</span>
 						<span className="ml-1.5 text-sm text-gray-500 dark:text-gray-400">following</span>
+					</button>
+					<button
+						onClick={() => setFollowModal({ open: true, type: "friends" })}
+						className="text-center hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg px-3 py-1 -mx-1 transition-colors"
+					>
+						<span className="text-lg font-bold text-gray-900 dark:text-gray-100">{friendsCount}</span>
+						<span className="ml-1.5 text-sm text-gray-500 dark:text-gray-400">friends</span>
 					</button>
 				</div>
 

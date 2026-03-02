@@ -18,6 +18,7 @@ router.patch("/profile", upload.single("avatar"), validate(updateProfileSchema),
 router.get("/following/ids", usersController.getFollowingIds);
 router.get("/:id/followers", usersController.getFollowers);
 router.get("/:id/following", usersController.getFollowing);
+router.get("/:id/friends", usersController.getFriends);
 router.post("/:id/follow", usersController.followUser);
 router.delete("/:id/follow", usersController.unfollowUser);
 router.get("/:id/follow-status", usersController.getFollowStatus);

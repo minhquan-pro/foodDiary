@@ -27,7 +27,17 @@ export const getProfile = async (userId) => {
 	});
 
 	if (!user) throw ApiError.notFound("User not found");
-	return user;
+
+	// Count mutual follows (friends): users that userId follows AND who follow userId back
+	const followingIds = (
+		await prisma.follow.findMany({ where: { followerId: userId }, select: { followingId: true } })
+	).map((f) => f.followingId);
+
+	const friendsCount = await prisma.follow.count({
+		where: { followerId: { in: followingIds }, followingId: userId },
+	});
+
+	return { ...user, _count: { ...user._count, friends: friendsCount } };
 };
 
 /**
@@ -172,4 +182,34 @@ export const getFollowing = async (userId) => {
 		orderBy: { createdAt: "desc" },
 	});
 	return follows.map((f) => f.following);
+};
+
+/**
+ * Get mutual friends (users who follow each other).
+ */
+export const getFriends = async (userId) => {
+	// Get IDs of users this person follows
+	const following = await prisma.follow.findMany({
+		where: { followerId: userId },
+		select: { followingId: true },
+	});
+	const followingIds = following.map((f) => f.followingId);
+
+	if (followingIds.length === 0) return [];
+
+	// Find which of those also follow this user back
+	const mutualFollows = await prisma.follow.findMany({
+		where: {
+			followerId: { in: followingIds },
+			followingId: userId,
+		},
+		select: {
+			follower: {
+				select: { id: true, name: true, avatarUrl: true, bio: true },
+			},
+		},
+		orderBy: { createdAt: "desc" },
+	});
+
+	return mutualFollows.map((f) => f.follower);
 };

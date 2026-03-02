@@ -63,3 +63,8 @@ export const getFollowing = catchAsync(async (req, res) => {
 	const users = await usersService.getFollowing(req.params.id);
 	res.json({ success: true, data: { users } });
 });
+
+export const getFriends = catchAsync(async (req, res) => {
+	const users = await usersService.getFriends(req.params.id);
+	res.json({ success: true, data: { users } });
+});

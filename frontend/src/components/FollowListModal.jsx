@@ -1,15 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { FiX, FiUsers, FiUser, FiUserPlus, FiUserCheck } from "react-icons/fi";
+import { FiX, FiUsers, FiUser, FiUserPlus, FiUserCheck, FiHeart } from "react-icons/fi";
 import api from "../lib/api.js";
 import toast from "react-hot-toast";
 
 export default function FollowListModal({ isOpen, onClose, userId, type = "followers", userName }) {
+	const [activeTab, setActiveTab] = useState(type);
 	const [users, setUsers] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [followingIds, setFollowingIds] = useState([]);
 	const { user: currentUser } = useSelector((state) => state.auth);
+
+	useEffect(() => {
+		if (!isOpen || !userId) return;
+		setActiveTab(type);
+	}, [isOpen, type]);
 
 	useEffect(() => {
 		if (!isOpen || !userId) return;
@@ -18,7 +24,7 @@ export default function FollowListModal({ isOpen, onClose, userId, type = "follo
 		const fetchData = async () => {
 			try {
 				const [listRes, idsRes] = await Promise.all([
-					api.get(`/users/${userId}/${type}`),
+					api.get(`/users/${userId}/${activeTab}`),
 					api.get("/users/following/ids"),
 				]);
 				setUsers(listRes.data.data.users);
@@ -31,7 +37,7 @@ export default function FollowListModal({ isOpen, onClose, userId, type = "follo
 			}
 		};
 		fetchData();
-	}, [isOpen, userId, type]);
+	}, [isOpen, userId, activeTab]);
 
 	const handleToggleFollow = async (targetId, isFollowing) => {
 		try {
@@ -51,7 +57,18 @@ export default function FollowListModal({ isOpen, onClose, userId, type = "follo
 
 	if (!isOpen) return null;
 
-	const title = type === "followers" ? "Followers" : "Following";
+	const emptyMessage =
+		activeTab === "followers"
+			? "No followers yet"
+			: activeTab === "following"
+				? "Not following anyone yet"
+				: "No friends yet";
+
+	const tabs = [
+		{ key: "followers", label: "Followers", icon: FiUsers },
+		{ key: "following", label: "Following", icon: FiUserCheck },
+		{ key: "friends", label: "Friends", icon: FiHeart },
+	];
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -64,10 +81,7 @@ export default function FollowListModal({ isOpen, onClose, userId, type = "follo
 				<div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-700">
 					<div className="flex items-center gap-2">
 						<FiUsers size={18} className="text-primary-500" />
-						<h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{title}</h2>
-						<span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-							{users.length}
-						</span>
+						<h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{userName || "User"}</h2>
 					</div>
 					<button
 						onClick={onClose}
@@ -75,6 +89,27 @@ export default function FollowListModal({ isOpen, onClose, userId, type = "follo
 					>
 						<FiX size={18} />
 					</button>
+				</div>
+
+				{/* Tabs */}
+				<div className="flex border-b border-gray-100 dark:border-gray-700">
+					{tabs.map((tab) => {
+						const Icon = tab.icon;
+						return (
+							<button
+								key={tab.key}
+								onClick={() => setActiveTab(tab.key)}
+								className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${
+									activeTab === tab.key
+										? "border-primary-500 text-primary-600 dark:text-primary-400"
+										: "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+								}`}
+							>
+								<Icon size={15} />
+								{tab.label}
+							</button>
+						);
+					})}
 				</div>
 
 				{/* Body */}
@@ -86,9 +121,7 @@ export default function FollowListModal({ isOpen, onClose, userId, type = "follo
 					) : users.length === 0 ? (
 						<div className="py-12 text-center">
 							<FiUser size={32} className="mx-auto mb-2 text-gray-200 dark:text-gray-600" />
-							<p className="text-sm text-gray-400 dark:text-gray-500">
-								{type === "followers" ? "No followers yet" : "Not following anyone yet"}
-							</p>
+							<p className="text-sm text-gray-400 dark:text-gray-500">{emptyMessage}</p>
 						</div>
 					) : (
 						<div className="space-y-0.5">
