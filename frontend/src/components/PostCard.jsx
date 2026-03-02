@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 import StarRating from "./StarRating.jsx";
 import ImageLightbox from "./ImageLightbox.jsx";
+import CommentsModal from "./CommentsModal.jsx";
 import { toggleLike } from "../features/posts/postsSlice.js";
 import { followFromFeed, blockFromFeed, reportFromFeed } from "../features/feed/feedSlice.js";
 import toast from "react-hot-toast";
@@ -43,6 +44,7 @@ export default function PostCard({ post }) {
 	const isLiked = feedLikedIds.includes(post.id) || profileLikedIds.includes(post.id);
 
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [commentsOpen, setCommentsOpen] = useState(false);
 	const [reportOpen, setReportOpen] = useState(false);
 	const [reportReason, setReportReason] = useState("spam");
 	const [reportDetails, setReportDetails] = useState("");
@@ -222,13 +224,13 @@ export default function PostCard({ post }) {
 						)}
 						<span className="font-medium">{post._count?.likes || 0}</span>
 					</button>
-					<Link
-						to={`/posts/${post.id}`}
+					<button
+						onClick={() => setCommentsOpen(true)}
 						className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-400 dark:hover:bg-primary-900/20 transition-all duration-200"
 					>
 						<FiMessageCircle size={16} />
 						<span className="font-medium">{post._count?.comments || 0}</span>
-					</Link>
+					</button>
 					<button
 						onClick={handleShare}
 						className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-400 dark:hover:bg-primary-900/20 transition-all duration-200 ml-auto"
@@ -238,6 +240,9 @@ export default function PostCard({ post }) {
 					</button>
 				</div>
 			</div>
+
+			{/* Comments Modal */}
+			{commentsOpen && <CommentsModal post={post} onClose={() => setCommentsOpen(false)} />}
 
 			{/* Report Modal */}
 			{reportOpen && (
