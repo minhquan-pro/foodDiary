@@ -4,7 +4,18 @@ import { createPost } from "../features/posts/postsSlice.js";
 import { fetchFeed } from "../features/feed/feedSlice.js";
 import StarRating from "./StarRating.jsx";
 import toast from "react-hot-toast";
-import { FiX, FiUpload, FiCamera, FiMapPin, FiStar, FiFileText, FiImage, FiTrash2 } from "react-icons/fi";
+import {
+	FiX,
+	FiUpload,
+	FiCamera,
+	FiMapPin,
+	FiStar,
+	FiFileText,
+	FiImage,
+	FiTrash2,
+	FiLoader,
+} from "react-icons/fi";
+import { MdMyLocation } from "react-icons/md";
 
 export default function CreatePostModal({ isOpen, onClose }) {
 	const dispatch = useDispatch();
@@ -24,6 +35,14 @@ export default function CreatePostModal({ isOpen, onClose }) {
 	const [closing, setClosing] = useState(false);
 	const [step, setStep] = useState(1); // 1 = image, 2 = details
 
+	// Address suggestion state
+	const [addressSuggestions, setAddressSuggestions] = useState([]);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [locating, setLocating] = useState(false);
+	const addressDebounceRef = useRef(null);
+	const addressInputRef = useRef(null);
+	const suggestionsRef = useRef(null);
+
 	// Reset on open
 	useEffect(() => {
 		if (isOpen) {
@@ -33,6 +52,9 @@ export default function CreatePostModal({ isOpen, onClose }) {
 			setDragOver(false);
 			setClosing(false);
 			setStep(1);
+			setAddressSuggestions([]);
+			setShowSuggestions(false);
+			setLocating(false);
 		}
 	}, [isOpen]);
 
@@ -81,6 +103,97 @@ export default function CreatePostModal({ isOpen, onClose }) {
 	}, [loading, onClose]);
 
 	const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+	// ─── Address autocomplete via Nominatim ────────────────────
+	const searchAddress = useCallback(async (query) => {
+		if (!query || query.length < 3) {
+			setAddressSuggestions([]);
+			setShowSuggestions(false);
+			return;
+		}
+		try {
+			const res = await fetch(
+				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+				{ headers: { "Accept-Language": "vi,en" } },
+			);
+			const data = await res.json();
+			setAddressSuggestions(data);
+			setShowSuggestions(data.length > 0);
+		} catch {
+			setAddressSuggestions([]);
+		}
+	}, []);
+
+	const handleAddressChange = (e) => {
+		const value = e.target.value;
+		setForm((prev) => ({ ...prev, restaurantAddress: value }));
+
+		// Debounce API call
+		if (addressDebounceRef.current) clearTimeout(addressDebounceRef.current);
+		addressDebounceRef.current = setTimeout(() => searchAddress(value), 400);
+	};
+
+	const handleSelectSuggestion = (suggestion) => {
+		setForm((prev) => ({ ...prev, restaurantAddress: suggestion.display_name }));
+		setShowSuggestions(false);
+		setAddressSuggestions([]);
+	};
+
+	// Close suggestions on outside click
+	useEffect(() => {
+		const handler = (e) => {
+			if (
+				suggestionsRef.current &&
+				!suggestionsRef.current.contains(e.target) &&
+				addressInputRef.current &&
+				!addressInputRef.current.contains(e.target)
+			) {
+				setShowSuggestions(false);
+			}
+		};
+		if (showSuggestions) document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [showSuggestions]);
+
+	// ─── Geolocation: detect current location ─────────────────
+	const handleGetLocation = () => {
+		if (!navigator.geolocation) {
+			toast.error("Geolocation is not supported by your browser");
+			return;
+		}
+		setLocating(true);
+		navigator.geolocation.getCurrentPosition(
+			async (position) => {
+				try {
+					const { latitude, longitude } = position.coords;
+					const res = await fetch(
+						`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+						{ headers: { "Accept-Language": "vi,en" } },
+					);
+					const data = await res.json();
+					if (data.display_name) {
+						setForm((prev) => ({ ...prev, restaurantAddress: data.display_name }));
+						toast.success("Location detected!");
+					} else {
+						toast.error("Could not determine address");
+					}
+				} catch {
+					toast.error("Failed to get address from location");
+				} finally {
+					setLocating(false);
+				}
+			},
+			(err) => {
+				setLocating(false);
+				if (err.code === err.PERMISSION_DENIED) {
+					toast.error("Location access denied. Please allow location in your browser settings.");
+				} else {
+					toast.error("Could not get your location");
+				}
+			},
+			{ enableHighAccuracy: true, timeout: 10000 },
+		);
+	};
 
 	const processFile = (file) => {
 		if (file && file.type.startsWith("image/")) {
@@ -322,15 +435,63 @@ export default function CreatePostModal({ isOpen, onClose }) {
 										<FiMapPin size={15} className="text-primary-500" />
 										Restaurant Address
 									</label>
-									<input
-										type="text"
-										name="restaurantAddress"
-										value={form.restaurantAddress}
-										onChange={handleChange}
-										className="input"
-										placeholder="e.g. 123 Main St, City"
-										required
-									/>
+									<div className="relative">
+										<div className="flex gap-2">
+											<div className="relative flex-1">
+												<input
+													ref={addressInputRef}
+													type="text"
+													name="restaurantAddress"
+													value={form.restaurantAddress}
+													onChange={handleAddressChange}
+													onFocus={() =>
+														addressSuggestions.length > 0 && setShowSuggestions(true)
+													}
+													className="input w-full"
+													placeholder="e.g. 123 Main St, City"
+													autoComplete="off"
+													required
+												/>
+												{/* Suggestions dropdown */}
+												{showSuggestions && addressSuggestions.length > 0 && (
+													<div
+														ref={suggestionsRef}
+														className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+													>
+														{addressSuggestions.map((s) => (
+															<button
+																key={s.place_id}
+																type="button"
+																onClick={() => handleSelectSuggestion(s)}
+																className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left text-sm hover:bg-gray-50 transition-colors dark:hover:bg-gray-700/50"
+															>
+																<FiMapPin
+																	size={14}
+																	className="mt-0.5 shrink-0 text-primary-400"
+																/>
+																<span className="text-gray-700 dark:text-gray-300 line-clamp-2">
+																	{s.display_name}
+																</span>
+															</button>
+														))}
+													</div>
+												)}
+											</div>
+											<button
+												type="button"
+												onClick={handleGetLocation}
+												disabled={locating}
+												className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-500 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 dark:hover:text-primary-400 transition-all duration-200"
+												title="Detect my location"
+											>
+												{locating ? (
+													<FiLoader size={16} className="animate-spin" />
+												) : (
+													<MdMyLocation size={16} />
+												)}
+											</button>
+										</div>
+									</div>
 								</div>
 
 								{/* Rating */}
