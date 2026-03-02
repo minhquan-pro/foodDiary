@@ -19,6 +19,32 @@ const USER_SELECT = {
 };
 
 /**
+ * Search users by name or email.
+ */
+export const searchUsers = async (query, { page = 1, limit = 10 } = {}) => {
+	const skip = (page - 1) * limit;
+	const where = {
+		OR: [{ name: { contains: query } }, { email: { contains: query } }],
+	};
+
+	const [users, total] = await Promise.all([
+		prisma.user.findMany({
+			where,
+			select: { id: true, name: true, role: true, avatarUrl: true, bio: true },
+			skip,
+			take: limit,
+			orderBy: { name: "asc" },
+		}),
+		prisma.user.count({ where }),
+	]);
+
+	return {
+		users,
+		pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
+};
+
+/**
  * Get user profile by ID.
  */
 export const getProfile = async (userId) => {

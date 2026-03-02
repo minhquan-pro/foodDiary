@@ -7,6 +7,7 @@ import { FiHome, FiPlus, FiUser, FiLogOut, FiSearch, FiSun, FiMoon } from "react
 import CreatePostModal from "./CreatePostModal.jsx";
 import NotificationBell from "./NotificationBell.jsx";
 import VerifiedBadge from "./VerifiedBadge.jsx";
+import UserSearch from "./UserSearch.jsx";
 
 export default function Navbar() {
 	const dispatch = useDispatch();
@@ -39,6 +40,8 @@ export default function Navbar() {
 							FoodShare
 						</span>
 					</Link>
+
+					{user && <UserSearch />}
 
 					<div className="flex items-center gap-1">
 						{/* Theme toggle */}

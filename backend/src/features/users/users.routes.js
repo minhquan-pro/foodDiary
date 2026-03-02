@@ -9,6 +9,9 @@ const router = Router();
 
 router.use(authenticate);
 
+// Search users
+router.get("/", usersController.searchUsers);
+
 // Profile
 router.get("/:id", usersController.getProfile);
 router.get("/:id/posts", usersController.getUserPosts);

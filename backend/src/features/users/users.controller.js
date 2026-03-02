@@ -2,6 +2,18 @@ import * as usersService from "./users.service.js";
 import * as notificationsService from "../notifications/notifications.service.js";
 import catchAsync from "../../utils/catchAsync.js";
 
+export const searchUsers = catchAsync(async (req, res) => {
+	const { q, page = 1, limit = 10 } = req.query;
+	if (!q || !q.trim()) {
+		return res.json({
+			success: true,
+			data: { users: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } },
+		});
+	}
+	const result = await usersService.searchUsers(q.trim(), { page: parseInt(page), limit: parseInt(limit) });
+	res.json({ success: true, data: result });
+});
+
 export const getProfile = catchAsync(async (req, res) => {
 	const user = await usersService.getProfile(req.params.id);
 	res.json({ success: true, data: { user } });
