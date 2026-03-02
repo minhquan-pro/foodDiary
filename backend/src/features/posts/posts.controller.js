@@ -10,6 +10,15 @@ export const createPost = catchAsync(async (req, res) => {
 	res.status(201).json({ success: true, data: { post } });
 });
 
+export const searchRestaurantNames = catchAsync(async (req, res) => {
+	const { q } = req.query;
+	if (!q || !q.trim()) {
+		return res.json({ success: true, data: { names: [] } });
+	}
+	const names = await postsService.searchRestaurantNames(q.trim());
+	res.json({ success: true, data: { names } });
+});
+
 export const getFeed = catchAsync(async (req, res) => {
 	const page = parseInt(req.query.page, 10) || 1;
 	const limit = parseInt(req.query.limit, 10) || 10;

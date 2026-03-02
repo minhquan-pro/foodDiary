@@ -8,6 +8,20 @@ const POST_INCLUDE = {
 };
 
 /**
+ * Search distinct restaurant names.
+ */
+export const searchRestaurantNames = async (query, limit = 8) => {
+	const posts = await prisma.post.findMany({
+		where: { restaurantName: { contains: query } },
+		select: { restaurantName: true },
+		distinct: ["restaurantName"],
+		orderBy: { restaurantName: "asc" },
+		take: limit,
+	});
+	return posts.map((p) => p.restaurantName);
+};
+
+/**
  * Create a food review post.
  */
 export const createPost = async (userId, data, imageUrl) => {

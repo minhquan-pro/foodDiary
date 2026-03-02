@@ -33,6 +33,13 @@ export default function CreatePostModal({ isOpen, onClose }) {
 	const addressInputRef = useRef(null);
 	const suggestionsRef = useRef(null);
 
+	// Restaurant name suggestion state
+	const [nameSuggestions, setNameSuggestions] = useState([]);
+	const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+	const nameDebounceRef = useRef(null);
+	const nameInputRef = useRef(null);
+	const nameSuggestionsRef = useRef(null);
+
 	// Reset on open
 	useEffect(() => {
 		if (isOpen) {
@@ -45,6 +52,8 @@ export default function CreatePostModal({ isOpen, onClose }) {
 			setAddressSuggestions([]);
 			setShowSuggestions(false);
 			setLocating(false);
+			setNameSuggestions([]);
+			setShowNameSuggestions(false);
 		}
 	}, [isOpen]);
 
@@ -93,6 +102,94 @@ export default function CreatePostModal({ isOpen, onClose }) {
 	}, [loading, onClose]);
 
 	const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+	// ─── Restaurant name autocomplete via Nominatim ───────────
+	const handleNameChange = (e) => {
+		const value = e.target.value;
+		setForm((prev) => ({ ...prev, restaurantName: value }));
+
+		clearTimeout(nameDebounceRef.current);
+		if (!value.trim() || value.length < 2) {
+			setNameSuggestions([]);
+			setShowNameSuggestions(false);
+			return;
+		}
+		nameDebounceRef.current = setTimeout(async () => {
+			try {
+				const query = encodeURIComponent(value.trim());
+				const res = await fetch(
+					`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=8&addressdetails=1&extratags=1&namedetails=1`,
+					{ headers: { "Accept-Language": "vi,en" } },
+				);
+				const data = await res.json();
+				// Filter for food-related places
+				const foodTypes = [
+					"restaurant",
+					"cafe",
+					"fast_food",
+					"bar",
+					"pub",
+					"food_court",
+					"bakery",
+					"ice_cream",
+				];
+				const places = data
+					.filter(
+						(p) =>
+							foodTypes.includes(p.extratags?.amenity) ||
+							foodTypes.includes(p.type) ||
+							p.class === "amenity",
+					)
+					.map((p) => ({
+						name: p.namedetails?.["name:vi"] || p.namedetails?.name || p.display_name.split(",")[0],
+						address: p.display_name,
+						lat: p.lat,
+						lon: p.lon,
+					}));
+				// If no food-specific results, show general results with names
+				const results =
+					places.length > 0
+						? places
+						: data.slice(0, 6).map((p) => ({
+								name: p.namedetails?.["name:vi"] || p.namedetails?.name || p.display_name.split(",")[0],
+								address: p.display_name,
+								lat: p.lat,
+								lon: p.lon,
+							}));
+				setNameSuggestions(results);
+				setShowNameSuggestions(results.length > 0);
+			} catch {
+				setNameSuggestions([]);
+				setShowNameSuggestions(false);
+			}
+		}, 400);
+	};
+
+	const selectNameSuggestion = (place) => {
+		setForm((prev) => ({
+			...prev,
+			restaurantName: place.name,
+			restaurantAddress: place.address,
+		}));
+		setNameSuggestions([]);
+		setShowNameSuggestions(false);
+	};
+
+	// Close name suggestions on outside click
+	useEffect(() => {
+		const handler = (e) => {
+			if (
+				nameSuggestionsRef.current &&
+				!nameSuggestionsRef.current.contains(e.target) &&
+				nameInputRef.current &&
+				!nameInputRef.current.contains(e.target)
+			) {
+				setShowNameSuggestions(false);
+			}
+		};
+		document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, []);
 
 	// ─── Address autocomplete via Nominatim ────────────────────
 	const searchAddress = useCallback(async (query) => {
@@ -402,21 +499,51 @@ export default function CreatePostModal({ isOpen, onClose }) {
 
 							<div className="space-y-5">
 								{/* Restaurant Name */}
-								<div>
+								<div className="relative">
 									<label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
 										<FiFileText size={15} className="text-primary-500" />
 										Restaurant Name
 									</label>
 									<input
-										ref={firstInputRef}
+										ref={(el) => {
+											firstInputRef.current = el;
+											nameInputRef.current = el;
+										}}
 										type="text"
 										name="restaurantName"
 										value={form.restaurantName}
-										onChange={handleChange}
+										onChange={handleNameChange}
+										onFocus={() => nameSuggestions.length > 0 && setShowNameSuggestions(true)}
 										className="input"
 										placeholder="e.g. The Italian Corner"
+										autoComplete="off"
 										required
 									/>
+									{showNameSuggestions && nameSuggestions.length > 0 && (
+										<div
+											ref={nameSuggestionsRef}
+											className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+										>
+											{nameSuggestions.map((place, i) => (
+												<button
+													key={i}
+													type="button"
+													onClick={() => selectNameSuggestion(place)}
+													className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left hover:bg-primary-50 transition-colors dark:hover:bg-gray-700"
+												>
+													<FiMapPin size={14} className="shrink-0 text-primary-400 mt-0.5" />
+													<div className="min-w-0 flex-1">
+														<p className="text-sm font-medium text-gray-800 truncate dark:text-gray-200">
+															{place.name}
+														</p>
+														<p className="text-xs text-gray-400 truncate dark:text-gray-500">
+															{place.address}
+														</p>
+													</div>
+												</button>
+											))}
+										</div>
+									)}
 								</div>
 
 								{/* Address */}

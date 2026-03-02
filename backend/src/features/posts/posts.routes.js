@@ -14,6 +14,7 @@ router.get("/share/:slug", postsController.getPostBySlug);
 router.use(authenticate);
 
 router.get("/locations", postsController.getLocations);
+router.get("/restaurant-names", postsController.searchRestaurantNames);
 router.get("/feed", postsController.getFeed);
 router.get("/friends", postsController.getFriendsFeed);
 router.get("/:id", postsController.getPostById);
