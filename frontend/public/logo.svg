@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g6" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6C5CE7"/>
+      <stop offset="100%" stop-color="#A29BFE"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#g6)"/>
+  <!-- Location pin -->
+  <path d="M256 80 C190 80 140 130 140 196 C140 290 256 420 256 420 C256 420 372 290 372 196 C372 130 322 80 256 80Z" fill="white" opacity="0.95"/>
+  <!-- Fork inside pin -->
+  <g transform="translate(234,140)">
+    <rect x="0" y="0" width="7" height="70" rx="3.5" fill="#6C5CE7"/>
+    <rect x="18" y="0" width="7" height="70" rx="3.5" fill="#6C5CE7"/>
+    <rect x="36" y="0" width="7" height="70" rx="3.5" fill="#6C5CE7"/>
+    <rect x="-3" y="65" width="49" height="10" rx="5" fill="#6C5CE7"/>
+    <rect x="16" y="72" width="12" height="50" rx="6" fill="#6C5CE7"/>
+  </g>
+</svg>
