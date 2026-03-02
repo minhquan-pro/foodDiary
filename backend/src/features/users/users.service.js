@@ -5,6 +5,7 @@ const USER_SELECT = {
 	id: true,
 	email: true,
 	name: true,
+	role: true,
 	bio: true,
 	avatarUrl: true,
 	facebook: true,
@@ -53,7 +54,7 @@ export const getUserPosts = async (userId, { page = 1, limit = 10 }, currentUser
 			skip,
 			take: limit,
 			include: {
-				user: { select: { id: true, name: true, avatarUrl: true } },
+				user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 				_count: { select: { likes: true, comments: true } },
 			},
 		}),
@@ -160,7 +161,7 @@ export const getFollowers = async (userId) => {
 		where: { followingId: userId },
 		select: {
 			follower: {
-				select: { id: true, name: true, avatarUrl: true, bio: true },
+				select: { id: true, name: true, role: true, avatarUrl: true, bio: true },
 			},
 		},
 		orderBy: { createdAt: "desc" },
@@ -176,7 +177,7 @@ export const getFollowing = async (userId) => {
 		where: { followerId: userId },
 		select: {
 			following: {
-				select: { id: true, name: true, avatarUrl: true, bio: true },
+				select: { id: true, name: true, role: true, avatarUrl: true, bio: true },
 			},
 		},
 		orderBy: { createdAt: "desc" },
@@ -205,7 +206,7 @@ export const getFriends = async (userId) => {
 		},
 		select: {
 			follower: {
-				select: { id: true, name: true, avatarUrl: true, bio: true },
+				select: { id: true, name: true, role: true, avatarUrl: true, bio: true },
 			},
 		},
 		orderBy: { createdAt: "desc" },

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { FiX, FiUsers, FiUser, FiUserPlus, FiUserCheck, FiHeart } from "react-icons/fi";
+import VerifiedBadge from "./VerifiedBadge.jsx";
 import api from "../lib/api.js";
 import toast from "react-hot-toast";
 

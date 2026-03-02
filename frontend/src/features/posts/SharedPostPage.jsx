@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchPostBySlug, clearCurrentPost } from "./postsSlice.js";
 import Spinner from "../../components/Spinner.jsx";
 import StarRating from "../../components/StarRating.jsx";
+import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 import { FiMapPin, FiClock } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
@@ -43,7 +44,10 @@ export default function SharedPostPage() {
 							</div>
 						)}
 						<div>
-							<p className="font-semibold text-gray-900 dark:text-gray-100">{post.user.name}</p>
+							<p className="font-semibold text-gray-900 dark:text-gray-100">
+								{post.user.name}
+								<VerifiedBadge role={post.user.role} className="ml-1" />
+							</p>
 							<p className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
 								<FiClock size={11} />
 								{new Date(post.createdAt).toLocaleDateString()}

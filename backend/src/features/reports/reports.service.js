@@ -32,7 +32,7 @@ export const getMyReports = async (userId) => {
 		where: { reporterId: userId },
 		orderBy: { createdAt: "desc" },
 		include: {
-			reported: { select: { id: true, name: true, avatarUrl: true } },
+			reported: { select: { id: true, name: true, role: true, avatarUrl: true } },
 		},
 	});
 };

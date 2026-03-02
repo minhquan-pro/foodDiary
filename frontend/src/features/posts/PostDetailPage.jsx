@@ -13,6 +13,7 @@ import {
 import StarRating from "../../components/StarRating.jsx";
 import Spinner from "../../components/Spinner.jsx";
 import ImageLightbox from "../../components/ImageLightbox.jsx";
+import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 import {
 	FiHeart,
 	FiMessageCircle,
@@ -93,6 +94,7 @@ function CommentItem({ comment, postId, currentUser, depth = 0, likedCommentIds 
 						>
 							{comment.user.name}
 						</Link>
+						<VerifiedBadge role={comment.user.role} size={14} />
 						<span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(comment.createdAt)}</span>
 					</div>
 					<p className="mt-0.5 text-sm text-gray-600 leading-relaxed dark:text-gray-400">{comment.body}</p>
@@ -270,7 +272,8 @@ export default function PostDetailPage() {
 									)}
 									<div>
 										<p className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors dark:text-gray-100">
-											{post.user.name}
+											{post.user.name}{" "}
+											<VerifiedBadge role={post.user.role} className="ml-1" />{" "}
 										</p>
 										<p className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
 											<FiClock size={11} />

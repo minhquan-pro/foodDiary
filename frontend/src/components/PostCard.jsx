@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 import StarRating from "./StarRating.jsx";
 import ImageLightbox from "./ImageLightbox.jsx";
+import VerifiedBadge from "./VerifiedBadge.jsx";
 import CommentsModal from "./CommentsModal.jsx";
 import { toggleLike } from "../features/posts/postsSlice.js";
 import { followFromFeed, blockFromFeed, reportFromFeed } from "../features/feed/feedSlice.js";
@@ -115,7 +116,7 @@ export default function PostCard({ post }) {
 				<div className="p-5">
 					{/* User info row */}
 					<div className="mb-3 flex items-center justify-between">
-						<Link to={`/profile/${post.user.id}`} className="flex items-center gap-2.5 group/user">
+						<Link to={`/profile/${post.user.id}`} className="flex items-center gap-2 group/user">
 							<div className="relative">
 								{post.user.avatarUrl ? (
 									<ImageLightbox src={post.user.avatarUrl} alt={post.user.name}>
@@ -144,6 +145,7 @@ export default function PostCard({ post }) {
 							<span className="font-semibold text-gray-800 group-hover/user:text-primary-600 transition-colors dark:text-gray-200">
 								{post.user.name}
 							</span>
+							<VerifiedBadge role={post.user.role} />
 						</Link>
 						<span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
 							<FiClock size={12} />

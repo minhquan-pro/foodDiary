@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { FiBell, FiHeart, FiMessageCircle, FiCheck, FiUserPlus } from "react-icons/fi";
+import VerifiedBadge from "./VerifiedBadge.jsx";
 import {
 	fetchNotifications,
 	fetchUnreadCount,
@@ -77,7 +78,7 @@ function NotificationItem({ notification, onRead, onClose }) {
 			<div className="flex-1 min-w-0">
 				<p className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
 					<span className="font-semibold text-gray-900 dark:text-gray-100">{notification.actor?.name}</span>{" "}
-					{message}
+					<VerifiedBadge role={notification.actor?.role} size={13} /> {message}
 				</p>
 				{notification.type === "comment" && notification.comment?.body && (
 					<p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500 line-clamp-1 italic">
@@ -98,6 +99,7 @@ export default function NotificationBell() {
 	const { notifications, unreadCount, pagination, loading } = useSelector((state) => state.notifications);
 	const [open, setOpen] = useState(false);
 	const dropdownRef = useRef(null);
+	const listRef = useRef(null);
 
 	// Fetch unread count on mount
 	useEffect(() => {
@@ -122,18 +124,29 @@ export default function NotificationBell() {
 		return () => document.removeEventListener("mousedown", handler);
 	}, [open]);
 
+	// Infinite scroll — load more when near bottom
+	useEffect(() => {
+		const el = listRef.current;
+		if (!el || !open) return;
+		const handleScroll = () => {
+			if (loading) return;
+			const { scrollTop, scrollHeight, clientHeight } = el;
+			if (scrollHeight - scrollTop - clientHeight < 80) {
+				if (pagination && pagination.page < pagination.totalPages) {
+					dispatch(fetchNotifications({ page: pagination.page + 1 }));
+				}
+			}
+		};
+		el.addEventListener("scroll", handleScroll);
+		return () => el.removeEventListener("scroll", handleScroll);
+	}, [open, loading, pagination, dispatch]);
+
 	const handleMarkAllRead = () => {
 		dispatch(markAllNotificationsRead());
 	};
 
 	const handleRead = (id) => {
 		dispatch(markNotificationRead(id));
-	};
-
-	const handleLoadMore = () => {
-		if (pagination && pagination.page < pagination.totalPages) {
-			dispatch(fetchNotifications({ page: pagination.page + 1 }));
-		}
 	};
 
 	const hasMore = pagination && pagination.page < pagination.totalPages;
@@ -172,7 +185,7 @@ export default function NotificationBell() {
 					</div>
 
 					{/* Notification list */}
-					<div className="max-h-96 overflow-y-auto">
+					<div ref={listRef} className="max-h-96 overflow-y-auto">
 						{loading && notifications.length === 0 ? (
 							<div className="flex items-center justify-center py-10">
 								<div className="h-6 w-6 animate-spin rounded-full border-3 border-primary-200 border-t-primary-600" />
@@ -194,14 +207,9 @@ export default function NotificationBell() {
 										/>
 									))}
 								</div>
-								{hasMore && (
-									<div className="border-t border-gray-100 dark:border-gray-700">
-										<button
-											onClick={handleLoadMore}
-											className="w-full py-3 text-sm font-medium text-primary-600 hover:bg-gray-50 transition-colors dark:text-primary-400 dark:hover:bg-gray-700/50"
-										>
-											Load more
-										</button>
+								{hasMore && loading && (
+									<div className="flex items-center justify-center py-3 border-t border-gray-100 dark:border-gray-700">
+										<div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600" />
 									</div>
 								)}
 							</>

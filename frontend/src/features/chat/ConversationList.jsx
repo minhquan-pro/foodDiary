@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiSearch, FiMessageSquare } from "react-icons/fi";
+import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 
 function formatTime(dateStr) {
 	if (!dateStr) return "";
@@ -123,6 +124,7 @@ export default function ConversationList({
 											>
 												{otherUser?.name || "Unknown"}
 											</p>
+											<VerifiedBadge role={otherUser?.role} size={14} />
 											<span className="text-[11px] text-gray-400 dark:text-gray-500 shrink-0 ml-2">
 												{formatTime(lastMsg?.createdAt || conv.updatedAt)}
 											</span>

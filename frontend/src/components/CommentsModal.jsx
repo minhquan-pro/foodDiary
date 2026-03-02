@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { fetchComments, addComment, deleteComment, toggleCommentLike } from "../features/posts/postsSlice.js";
 import { FiMessageCircle, FiHeart, FiSend, FiTrash2, FiCornerDownRight, FiX } from "react-icons/fi";
+import VerifiedBadge from "./VerifiedBadge.jsx";
 
 function timeAgo(dateStr) {
 	const now = new Date();
@@ -70,6 +71,7 @@ function CommentItem({ comment, postId, currentUser, depth = 0, likedCommentIds 
 						>
 							{comment.user.name}
 						</Link>
+						<VerifiedBadge role={comment.user.role} size={14} />
 						<span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(comment.createdAt)}</span>
 					</div>
 					<p className="mt-0.5 text-sm text-gray-600 leading-relaxed dark:text-gray-400">{comment.body}</p>

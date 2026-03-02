@@ -17,6 +17,7 @@ model User {
     email     String   @unique
     password  String
     name      String
+    role      String   @default("user")
     bio       String?
     avatarUrl String?  @map("avatar_url")
     facebook  String?

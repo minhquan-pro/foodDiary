@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addMessage, updateMessageReactions, deleteConversation } from "./chatSlice.js";
 import { FiArrowLeft, FiSend, FiSmile, FiMoreVertical, FiHeart, FiTrash2 } from "react-icons/fi";
+import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 
 function formatMessageTime(dateStr) {
 	const date = new Date(dateStr);
@@ -223,6 +224,7 @@ export default function ChatWindow({
 					<div className="flex-1 min-w-0">
 						<p className="text-sm font-semibold text-gray-900 truncate dark:text-gray-100">
 							{otherUser?.name || "Unknown"}
+							<VerifiedBadge role={otherUser?.role} className="ml-1" />
 						</p>
 						<p className="text-xs text-gray-400 dark:text-gray-500">
 							{isTyping ? (

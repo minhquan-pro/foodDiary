@@ -3,13 +3,14 @@ import prisma from "../../utils/prisma.js";
 const USER_SELECT = {
 	id: true,
 	name: true,
+	role: true,
 	avatarUrl: true,
 };
 
 const MESSAGE_INCLUDE = {
 	sender: { select: USER_SELECT },
 	reactions: {
-		include: { user: { select: { id: true, name: true } } },
+		include: { user: { select: { id: true, name: true, role: true } } },
 	},
 };
 

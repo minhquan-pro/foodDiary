@@ -11,7 +11,7 @@ export const createNotification = async ({ type, userId, actorId, postId = null,
 	const notification = await prisma.notification.create({
 		data: { type, userId, actorId, postId, commentId },
 		include: {
-			actor: { select: { id: true, name: true, avatarUrl: true } },
+			actor: { select: { id: true, name: true, role: true, avatarUrl: true } },
 			post: { select: { id: true, restaurantName: true, imageUrl: true } },
 			comment: { select: { id: true, body: true } },
 		},
@@ -23,7 +23,7 @@ export const createNotification = async ({ type, userId, actorId, postId = null,
 /**
  * Get notifications for a user (paginated, newest first).
  */
-export const getNotifications = async (userId, { page = 1, limit = 20 }) => {
+export const getNotifications = async (userId, { page = 1, limit = 10 }) => {
 	const skip = (page - 1) * limit;
 
 	const [notifications, total, unreadCount] = await Promise.all([
@@ -33,7 +33,7 @@ export const getNotifications = async (userId, { page = 1, limit = 20 }) => {
 			skip,
 			take: limit,
 			include: {
-				actor: { select: { id: true, name: true, avatarUrl: true } },
+				actor: { select: { id: true, name: true, role: true, avatarUrl: true } },
 				post: { select: { id: true, restaurantName: true, imageUrl: true } },
 				comment: { select: { id: true, body: true } },
 			},

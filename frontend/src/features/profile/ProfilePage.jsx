@@ -18,6 +18,7 @@ import PostCard from "../../components/PostCard.jsx";
 import Spinner from "../../components/Spinner.jsx";
 import ImageLightbox from "../../components/ImageLightbox.jsx";
 import FollowListModal from "../../components/FollowListModal.jsx";
+import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 import {
 	FiEdit2,
 	FiCamera,
@@ -349,7 +350,10 @@ export default function ProfilePage() {
 					{/* Name + action button */}
 					<div className="flex-1 pb-1">
 						<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-							<h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{profile.name}</h1>
+							<h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+								{profile.name}
+								<VerifiedBadge role={profile.role} size={20} className="ml-1.5" />
+							</h1>
 							{isOwnProfile ? (
 								<button onClick={() => setEditing(true)} className="btn-secondary text-sm shrink-0">
 									<FiEdit2 size={14} className="mr-1.5" /> Edit Profile

@@ -6,6 +6,7 @@ import { useTheme } from "../context/ThemeContext.jsx";
 import { FiHome, FiPlus, FiUser, FiLogOut, FiSearch, FiSun, FiMoon } from "react-icons/fi";
 import CreatePostModal from "./CreatePostModal.jsx";
 import NotificationBell from "./NotificationBell.jsx";
+import VerifiedBadge from "./VerifiedBadge.jsx";
 
 export default function Navbar() {
 	const dispatch = useDispatch();
@@ -70,6 +71,7 @@ export default function Navbar() {
 										</div>
 									)}
 									<span className="hidden sm:inline">{user.name}</span>
+									<VerifiedBadge role={user.role} size={14} />
 								</Link>
 								<div className="ml-2 h-5 w-px bg-gray-200 dark:bg-gray-700" />
 								<button

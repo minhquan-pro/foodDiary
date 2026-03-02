@@ -3,17 +3,17 @@ import { ApiError } from "../../utils/ApiError.js";
 
 // Reusable include for nested replies (2 levels deep)
 const REPLY_INCLUDE = {
-	user: { select: { id: true, name: true, avatarUrl: true } },
+	user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 	_count: { select: { commentLikes: true } },
 	replies: {
 		orderBy: { createdAt: "asc" },
 		include: {
-			user: { select: { id: true, name: true, avatarUrl: true } },
+			user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 			_count: { select: { commentLikes: true } },
 			replies: {
 				orderBy: { createdAt: "asc" },
 				include: {
-					user: { select: { id: true, name: true, avatarUrl: true } },
+					user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 					_count: { select: { commentLikes: true } },
 				},
 			},

@@ -3,7 +3,7 @@ import { ApiError } from "../../utils/ApiError.js";
 import { getAllBlockedUserIds } from "../blocks/blocks.service.js";
 
 const POST_INCLUDE = {
-	user: { select: { id: true, name: true, avatarUrl: true } },
+	user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 	_count: { select: { likes: true, comments: true } },
 };
 
@@ -159,17 +159,17 @@ export const getPostById = async (postId) => {
 				orderBy: { createdAt: "desc" },
 				take: 20,
 				include: {
-					user: { select: { id: true, name: true, avatarUrl: true } },
+					user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 					_count: { select: { commentLikes: true } },
 					replies: {
 						orderBy: { createdAt: "asc" },
 						include: {
-							user: { select: { id: true, name: true, avatarUrl: true } },
+							user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 							_count: { select: { commentLikes: true } },
 							replies: {
 								orderBy: { createdAt: "asc" },
 								include: {
-									user: { select: { id: true, name: true, avatarUrl: true } },
+									user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 									_count: { select: { commentLikes: true } },
 								},
 							},
@@ -197,17 +197,17 @@ export const getPostBySlug = async (slug) => {
 				orderBy: { createdAt: "desc" },
 				take: 20,
 				include: {
-					user: { select: { id: true, name: true, avatarUrl: true } },
+					user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 					_count: { select: { commentLikes: true } },
 					replies: {
 						orderBy: { createdAt: "asc" },
 						include: {
-							user: { select: { id: true, name: true, avatarUrl: true } },
+							user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 							_count: { select: { commentLikes: true } },
 							replies: {
 								orderBy: { createdAt: "asc" },
 								include: {
-									user: { select: { id: true, name: true, avatarUrl: true } },
+									user: { select: { id: true, name: true, role: true, avatarUrl: true } },
 									_count: { select: { commentLikes: true } },
 								},
 							},
