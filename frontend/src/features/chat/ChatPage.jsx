@@ -14,6 +14,7 @@ import {
 } from "./chatSlice.js";
 import ConversationList from "./ConversationList.jsx";
 import ChatWindow from "./ChatWindow.jsx";
+import CreateGroupModal from "./CreateGroupModal.jsx";
 import { FiMessageSquare, FiArrowLeft } from "react-icons/fi";
 
 export default function ChatPage() {
@@ -25,6 +26,7 @@ export default function ChatPage() {
 		(state) => state.chat,
 	);
 	const [showSidebar, setShowSidebar] = useState(true);
+	const [showGroupModal, setShowGroupModal] = useState(false);
 	const initRef = useRef(false);
 
 	// Load conversations on mount
@@ -111,6 +113,19 @@ export default function ChatPage() {
 		setShowSidebar(true);
 	}, [dispatch]);
 
+	const handleCreateGroup = useCallback(() => {
+		setShowGroupModal(true);
+	}, []);
+
+	const handleGroupCreated = useCallback(
+		(conversationId) => {
+			dispatch(setActiveConversation(conversationId));
+			setShowSidebar(false);
+			setShowGroupModal(false);
+		},
+		[dispatch],
+	);
+
 	const activeConversation = conversations.find((c) => c.id === activeConversationId);
 	const activeMessages = messages[activeConversationId] || [];
 
@@ -131,6 +146,7 @@ export default function ChatPage() {
 							currentUserId={currentUser?.id}
 							isUserOnline={isUserOnline}
 							onSelect={handleSelectConversation}
+							onCreateGroup={handleCreateGroup}
 						/>
 					</div>
 
@@ -170,6 +186,13 @@ export default function ChatPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* Create Group Modal */}
+			<CreateGroupModal
+				isOpen={showGroupModal}
+				onClose={() => setShowGroupModal(false)}
+				onCreated={handleGroupCreated}
+			/>
 		</div>
 	);
 }

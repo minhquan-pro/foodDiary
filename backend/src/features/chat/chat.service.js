@@ -18,9 +18,10 @@ const MESSAGE_INCLUDE = {
  * Get or create a 1-on-1 conversation between two users.
  */
 export async function getOrCreateConversation(userId, otherUserId) {
-	// Find existing conversation that has exactly these two members
+	// Find existing 1-on-1 conversation that has exactly these two members
 	const existing = await prisma.conversation.findFirst({
 		where: {
+			isGroup: false,
 			AND: [{ members: { some: { userId } } }, { members: { some: { userId: otherUserId } } }],
 		},
 		include: {
@@ -37,7 +38,7 @@ export async function getOrCreateConversation(userId, otherUserId) {
 		return formatConversation(existing, userId);
 	}
 
-	// Create new conversation
+	// Create new 1-on-1 conversation
 	const conversation = await prisma.conversation.create({
 		data: {
 			members: {
@@ -55,6 +56,126 @@ export async function getOrCreateConversation(userId, otherUserId) {
 	});
 
 	return formatConversation(conversation, userId);
+}
+
+/**
+ * Create a group conversation with multiple members.
+ */
+export async function createGroupConversation(creatorId, memberIds, name) {
+	// Ensure creator is included and deduplicate
+	const allIds = [...new Set([creatorId, ...memberIds])];
+
+	const conversation = await prisma.conversation.create({
+		data: {
+			isGroup: true,
+			name: name || null,
+			members: {
+				create: allIds.map((id) => ({ userId: id })),
+			},
+		},
+		include: {
+			members: { include: { user: { select: USER_SELECT } } },
+			messages: {
+				orderBy: { createdAt: "desc" },
+				take: 1,
+				include: { sender: { select: USER_SELECT } },
+			},
+		},
+	});
+
+	return formatConversation(conversation, creatorId);
+}
+
+/**
+ * Add members to a group conversation.
+ */
+export async function addGroupMembers(conversationId, requesterId, newMemberIds) {
+	const conv = await prisma.conversation.findUnique({
+		where: { id: conversationId },
+		include: { members: true },
+	});
+	if (!conv || !conv.isGroup) return null;
+
+	// Verify requester is a member
+	const isMember = conv.members.some((m) => m.userId === requesterId);
+	if (!isMember) return null;
+
+	// Filter out users who are already members
+	const existingIds = conv.members.map((m) => m.userId);
+	const toAdd = newMemberIds.filter((id) => !existingIds.includes(id));
+
+	if (toAdd.length === 0) return { added: [] };
+
+	await prisma.conversationMember.createMany({
+		data: toAdd.map((userId) => ({ conversationId, userId })),
+	});
+
+	const updated = await prisma.conversation.findUnique({
+		where: { id: conversationId },
+		include: {
+			members: { include: { user: { select: USER_SELECT } } },
+			messages: {
+				orderBy: { createdAt: "desc" },
+				take: 1,
+				include: { sender: { select: USER_SELECT } },
+			},
+		},
+	});
+
+	return { added: toAdd, conversation: formatConversation(updated, requesterId) };
+}
+
+/**
+ * Remove a member from a group conversation (or leave).
+ */
+export async function removeGroupMember(conversationId, requesterId, targetUserId) {
+	const conv = await prisma.conversation.findUnique({
+		where: { id: conversationId },
+		include: { members: true },
+	});
+	if (!conv || !conv.isGroup) return null;
+
+	// Requester must be a member
+	const isMember = conv.members.some((m) => m.userId === requesterId);
+	if (!isMember) return null;
+
+	await prisma.conversationMember.delete({
+		where: { conversationId_userId: { conversationId, userId: targetUserId } },
+	});
+
+	// If only 1 member remains, delete the conversation
+	const remaining = await prisma.conversationMember.count({ where: { conversationId } });
+	if (remaining <= 1) {
+		await prisma.conversation.delete({ where: { id: conversationId } });
+		return { deleted: true };
+	}
+
+	return { removed: targetUserId };
+}
+
+/**
+ * Update group conversation name.
+ */
+export async function updateGroupName(conversationId, userId, name) {
+	const member = await prisma.conversationMember.findUnique({
+		where: { conversationId_userId: { conversationId, userId } },
+	});
+	if (!member) return null;
+
+	const conv = await prisma.conversation.update({
+		where: { id: conversationId },
+		data: { name },
+		include: {
+			members: { include: { user: { select: USER_SELECT } } },
+			messages: {
+				orderBy: { createdAt: "desc" },
+				take: 1,
+				include: { sender: { select: USER_SELECT } },
+			},
+		},
+	});
+
+	return formatConversation(conv, userId);
 }
 
 /**
@@ -209,10 +330,17 @@ export async function deleteConversation(conversationId, userId) {
 // ─── Helpers ────────────────────────────────────────────────
 
 function formatConversation(conv, currentUserId) {
+	const isGroup = conv.isGroup || false;
 	const otherMember = conv.members.find((m) => m.userId !== currentUserId);
+	const members = conv.members.map((m) => m.user);
+
 	return {
 		id: conv.id,
-		otherUser: otherMember?.user || null,
+		isGroup,
+		name: isGroup ? conv.name || members.map((m) => m.name).join(", ") : null,
+		avatarUrl: conv.avatarUrl || null,
+		otherUser: isGroup ? null : otherMember?.user || null,
+		members,
 		lastMessage: conv.messages[0] || null,
 		unreadCount: conv._count?.messages || 0,
 		updatedAt: conv.updatedAt,

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../lib/api.js";
-import { toggleLike } from "../posts/postsSlice.js";
+import { toggleLike, createPost } from "../posts/postsSlice.js";
 
 // ─── Async Thunks ────────────────────────────────────────────
 
@@ -129,6 +129,12 @@ const feedSlice = createSlice({
 			state.posts = [];
 			state.pagination = null;
 		},
+		addOptimisticPost(state, action) {
+			state.posts.unshift(action.payload);
+		},
+		removeOptimisticPost(state, action) {
+			state.posts = state.posts.filter((p) => p.id !== action.payload);
+		},
 	},
 	extraReducers: (builder) => {
 		// Fetch latest feed
@@ -209,6 +215,15 @@ const feedSlice = createSlice({
 			state.followingIds = state.followingIds.filter((id) => id !== action.payload);
 		});
 
+		// Replace optimistic post with real one on createPost success
+		builder.addCase(createPost.fulfilled, (state, action) => {
+			const realPost = action.payload;
+			const idx = state.posts.findIndex((p) => String(p.id).startsWith("temp-"));
+			if (idx !== -1) {
+				state.posts[idx] = realPost;
+			}
+		});
+
 		// Optimistic toggle like from feed
 		builder.addCase(toggleLike.pending, (state, action) => {
 			const postId = action.meta.arg;
@@ -239,5 +254,6 @@ const feedSlice = createSlice({
 	},
 });
 
-export const { setFeedType, setSelectedLocation, clearFeed } = feedSlice.actions;
+export const { setFeedType, setSelectedLocation, clearFeed, addOptimisticPost, removeOptimisticPost } =
+	feedSlice.actions;
 export default feedSlice.reducer;

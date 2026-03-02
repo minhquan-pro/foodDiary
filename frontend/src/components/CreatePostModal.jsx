@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createPost } from "../features/posts/postsSlice.js";
-import { fetchFeed } from "../features/feed/feedSlice.js";
+import { addOptimisticPost, removeOptimisticPost } from "../features/feed/feedSlice.js";
 import StarRating from "./StarRating.jsx";
 import toast from "react-hot-toast";
 import { FiX, FiUpload, FiCamera, FiMapPin, FiStar, FiFileText, FiImage, FiTrash2, FiLoader } from "react-icons/fi";
@@ -10,6 +10,7 @@ import { MdMyLocation } from "react-icons/md";
 export default function CreatePostModal({ isOpen, onClose }) {
 	const dispatch = useDispatch();
 	const { loading } = useSelector((state) => state.posts);
+	const { user: currentUser } = useSelector((state) => state.auth);
 	const overlayRef = useRef(null);
 	const firstInputRef = useRef(null);
 
@@ -327,6 +328,31 @@ export default function CreatePostModal({ isOpen, onClose }) {
 		if (!image) return toast.error("Please upload a food photo");
 		if (form.rating === 0) return toast.error("Please select a rating");
 
+		// Build optimistic post
+		const tempId = `temp-${Date.now()}`;
+		const optimisticPost = {
+			id: tempId,
+			imageUrl: URL.createObjectURL(image),
+			restaurantName: form.restaurantName,
+			restaurantAddress: form.restaurantAddress,
+			rating: Number(form.rating),
+			description: form.description,
+			createdAt: new Date().toISOString(),
+			slug: tempId,
+			user: {
+				id: currentUser.id,
+				name: currentUser.name,
+				avatarUrl: currentUser.avatarUrl || null,
+				role: currentUser.role || "USER",
+			},
+			_count: { likes: 0, comments: 0 },
+		};
+
+		// Optimistically add to feed & close modal immediately
+		dispatch(addOptimisticPost(optimisticPost));
+		handleClose();
+		toast.success("Review published successfully! 🎉");
+
 		const formData = new FormData();
 		formData.append("image", image);
 		formData.append("restaurantName", form.restaurantName);
@@ -335,11 +361,8 @@ export default function CreatePostModal({ isOpen, onClose }) {
 		formData.append("description", form.description);
 
 		const result = await dispatch(createPost(formData));
-		if (createPost.fulfilled.match(result)) {
-			toast.success("Review published successfully! 🎉");
-			dispatch(fetchFeed({ page: 1 }));
-			handleClose();
-		} else {
+		if (createPost.rejected.match(result)) {
+			dispatch(removeOptimisticPost(tempId));
 			toast.error(result.payload || "Failed to create post");
 		}
 	};

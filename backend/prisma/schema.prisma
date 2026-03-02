@@ -197,10 +197,13 @@ model Report {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Conversation (1-on-1 chat)
+// Conversation (1-on-1 or group chat)
 // ─────────────────────────────────────────────────────────────
 model Conversation {
     id        String   @id @default(uuid())
+    isGroup   Boolean  @default(false) @map("is_group")
+    name      String? // group name (null for 1-on-1)
+    avatarUrl String?  @map("avatar_url") // group avatar
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 

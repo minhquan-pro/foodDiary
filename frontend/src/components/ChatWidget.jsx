@@ -14,6 +14,7 @@ import {
 } from "../features/chat/chatSlice.js";
 import ConversationList from "../features/chat/ConversationList.jsx";
 import ChatWindow from "../features/chat/ChatWindow.jsx";
+import CreateGroupModal from "../features/chat/CreateGroupModal.jsx";
 import { FiMessageSquare, FiX } from "react-icons/fi";
 
 export default function ChatWidget() {
@@ -26,6 +27,7 @@ export default function ChatWidget() {
 
 	const [open, setOpen] = useState(false);
 	const [view, setView] = useState("list"); // "list" | "chat"
+	const [showGroupModal, setShowGroupModal] = useState(false);
 	const panelRef = useRef(null);
 
 	// Close panel when clicking outside
@@ -121,6 +123,19 @@ export default function ChatWidget() {
 		setView("list");
 	}, [dispatch]);
 
+	const handleCreateGroup = useCallback(() => {
+		setShowGroupModal(true);
+	}, []);
+
+	const handleGroupCreated = useCallback(
+		(conversationId) => {
+			dispatch(setActiveConversation(conversationId));
+			setView("chat");
+			setShowGroupModal(false);
+		},
+		[dispatch],
+	);
+
 	const toggleOpen = () => {
 		if (!open) {
 			dispatch(fetchConversations());
@@ -187,6 +202,7 @@ export default function ChatWidget() {
 									currentUserId={currentUser?.id}
 									isUserOnline={isUserOnline}
 									onSelect={handleSelectConversation}
+									onCreateGroup={handleCreateGroup}
 									compact
 								/>
 							</div>
@@ -232,6 +248,13 @@ export default function ChatWidget() {
 					)}
 				</button>
 			)}
+
+			{/* Create Group Modal */}
+			<CreateGroupModal
+				isOpen={showGroupModal}
+				onClose={() => setShowGroupModal(false)}
+				onCreated={handleGroupCreated}
+			/>
 		</>
 	);
 }

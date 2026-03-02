@@ -21,6 +21,54 @@ export const startConversation = createAsyncThunk("chat/startConversation", asyn
 	}
 });
 
+export const createGroupConversation = createAsyncThunk(
+	"chat/createGroupConversation",
+	async ({ memberIds, name }, { rejectWithValue }) => {
+		try {
+			const { data } = await api.post("/chat/conversations/group", { memberIds, name });
+			return data.data.conversation;
+		} catch (err) {
+			return rejectWithValue(err.message);
+		}
+	},
+);
+
+export const addGroupMembers = createAsyncThunk(
+	"chat/addGroupMembers",
+	async ({ conversationId, memberIds }, { rejectWithValue }) => {
+		try {
+			const { data } = await api.post(`/chat/conversations/${conversationId}/members`, { memberIds });
+			return data.data;
+		} catch (err) {
+			return rejectWithValue(err.message);
+		}
+	},
+);
+
+export const removeGroupMember = createAsyncThunk(
+	"chat/removeGroupMember",
+	async ({ conversationId, userId }, { rejectWithValue }) => {
+		try {
+			const { data } = await api.delete(`/chat/conversations/${conversationId}/members/${userId}`);
+			return { conversationId, ...data.data };
+		} catch (err) {
+			return rejectWithValue(err.message);
+		}
+	},
+);
+
+export const updateGroupName = createAsyncThunk(
+	"chat/updateGroupName",
+	async ({ conversationId, name }, { rejectWithValue }) => {
+		try {
+			const { data } = await api.patch(`/chat/conversations/${conversationId}/name`, { name });
+			return data.data.conversation;
+		} catch (err) {
+			return rejectWithValue(err.message);
+		}
+	},
+);
+
 export const fetchMessages = createAsyncThunk(
 	"chat/fetchMessages",
 	async ({ conversationId, cursor }, { rejectWithValue }) => {
@@ -148,6 +196,40 @@ const chatSlice = createSlice({
 					state.conversations.unshift(action.payload);
 				}
 				state.activeConversationId = action.payload.id;
+			})
+			// createGroupConversation
+			.addCase(createGroupConversation.fulfilled, (state, action) => {
+				state.conversations.unshift(action.payload);
+				state.activeConversationId = action.payload.id;
+			})
+			// addGroupMembers
+			.addCase(addGroupMembers.fulfilled, (state, action) => {
+				const { conversation } = action.payload;
+				if (conversation) {
+					const idx = state.conversations.findIndex((c) => c.id === conversation.id);
+					if (idx !== -1) {
+						state.conversations[idx] = { ...state.conversations[idx], ...conversation };
+					}
+				}
+			})
+			// removeGroupMember
+			.addCase(removeGroupMember.fulfilled, (state, action) => {
+				const { conversationId, deleted } = action.payload;
+				if (deleted) {
+					state.conversations = state.conversations.filter((c) => c.id !== conversationId);
+					delete state.messages[conversationId];
+					if (state.activeConversationId === conversationId) {
+						state.activeConversationId = null;
+					}
+				}
+			})
+			// updateGroupName
+			.addCase(updateGroupName.fulfilled, (state, action) => {
+				const updated = action.payload;
+				const idx = state.conversations.findIndex((c) => c.id === updated.id);
+				if (idx !== -1) {
+					state.conversations[idx] = { ...state.conversations[idx], ...updated };
+				}
 			})
 			// fetchMessages
 			.addCase(fetchMessages.pending, (state) => {

@@ -67,33 +67,38 @@ export function setupSocket(io) {
 
 				callback?.({ success: true, message });
 
-				// ─── Auto-reply from admin ─────────────────────────
-				// If the other member is an admin, check if this is the first user message
-				// and send an automatic greeting
+				// ─── Auto-reply from admin (only for 1-on-1 conversations) ───
 				try {
-					const members = await prisma.conversationMember.findMany({
-						where: { conversationId },
-						include: { user: { select: { id: true, role: true } } },
+					const conv = await prisma.conversation.findUnique({
+						where: { id: conversationId },
+						select: { isGroup: true },
 					});
-					const adminMember = members.find((m) => m.user.role === "admin" && m.user.id !== userId);
-					if (adminMember) {
-						// Count messages sent by this user in this conversation
-						const userMsgCount = await prisma.message.count({
-							where: { conversationId, senderId: userId },
+
+					if (!conv?.isGroup) {
+						const members = await prisma.conversationMember.findMany({
+							where: { conversationId },
+							include: { user: { select: { id: true, role: true } } },
 						});
-						// Only auto-reply on the very first message from this user
-						if (userMsgCount === 1) {
-							const autoReply = await chatService.createMessage(
-								conversationId,
-								adminMember.user.id,
-								"Chào bạn, tôi có thể giúp gì cho bạn?",
-							);
-							if (autoReply) {
-								io.to(`conversation:${conversationId}`).emit("chat:newMessage", {
+						const adminMember = members.find((m) => m.user.role === "admin" && m.user.id !== userId);
+						if (adminMember) {
+							// Count messages sent by this user in this conversation
+							const userMsgCount = await prisma.message.count({
+								where: { conversationId, senderId: userId },
+							});
+							// Only auto-reply on the very first message from this user
+							if (userMsgCount === 1) {
+								const autoReply = await chatService.createMessage(
 									conversationId,
-									message: autoReply,
-								});
-								io.emit("chat:conversationUpdated", { conversationId, lastMessage: autoReply });
+									adminMember.user.id,
+									"Chào bạn, tôi có thể giúp gì cho bạn?",
+								);
+								if (autoReply) {
+									io.to(`conversation:${conversationId}`).emit("chat:newMessage", {
+										conversationId,
+										message: autoReply,
+									});
+									io.emit("chat:conversationUpdated", { conversationId, lastMessage: autoReply });
+								}
 							}
 						}
 					}

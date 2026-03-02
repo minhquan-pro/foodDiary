@@ -197,7 +197,7 @@ export default function PostCard({ post }) {
 					</p>
 
 					{/* Description */}
-					<p className="mt-3 line-clamp-2 text-sm text-gray-600 leading-relaxed dark:text-gray-400">
+					<p className="mt-3 line-clamp-2 text-md text-gray-700 leading-relaxed dark:text-gray-300">
 						{post.description}
 					</p>
 				</div>

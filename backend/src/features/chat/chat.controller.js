@@ -24,6 +24,64 @@ export const startConversation = catchAsync(async (req, res) => {
 });
 
 /**
+ * POST /api/chat/conversations/group
+ * Body: { memberIds: string[], name?: string }
+ */
+export const createGroupConversation = catchAsync(async (req, res) => {
+	const { memberIds, name } = req.body;
+	if (!Array.isArray(memberIds) || memberIds.length < 2) {
+		throw ApiError.badRequest("At least 2 other members are required for a group chat");
+	}
+
+	const conversation = await chatService.createGroupConversation(req.user.id, memberIds, name);
+	res.status(201).json({ success: true, data: { conversation } });
+});
+
+/**
+ * POST /api/chat/conversations/:id/members
+ * Body: { memberIds: string[] }
+ */
+export const addGroupMembers = catchAsync(async (req, res) => {
+	const { id } = req.params;
+	const { memberIds } = req.body;
+	if (!Array.isArray(memberIds) || memberIds.length === 0) {
+		throw ApiError.badRequest("memberIds array is required");
+	}
+
+	const result = await chatService.addGroupMembers(id, req.user.id, memberIds);
+	if (!result) throw ApiError.forbidden("Not a group conversation or not a member");
+
+	res.json({ success: true, data: result });
+});
+
+/**
+ * DELETE /api/chat/conversations/:id/members/:userId
+ */
+export const removeGroupMember = catchAsync(async (req, res) => {
+	const { id, userId } = req.params;
+
+	const result = await chatService.removeGroupMember(id, req.user.id, userId);
+	if (!result) throw ApiError.forbidden("Not a group conversation or not a member");
+
+	res.json({ success: true, data: result });
+});
+
+/**
+ * PATCH /api/chat/conversations/:id/name
+ * Body: { name: string }
+ */
+export const updateGroupName = catchAsync(async (req, res) => {
+	const { id } = req.params;
+	const { name } = req.body;
+	if (!name?.trim()) throw ApiError.badRequest("Group name is required");
+
+	const conversation = await chatService.updateGroupName(id, req.user.id, name.trim());
+	if (!conversation) throw ApiError.forbidden("Not a member of this conversation");
+
+	res.json({ success: true, data: { conversation } });
+});
+
+/**
  * GET /api/chat/conversations/:id/messages?cursor=&limit=
  */
 export const getMessages = catchAsync(async (req, res) => {

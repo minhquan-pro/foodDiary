@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addMessage, updateMessageReactions, deleteConversation } from "./chatSlice.js";
-import { FiArrowLeft, FiSend, FiSmile, FiMoreVertical, FiHeart, FiTrash2 } from "react-icons/fi";
+import { FiArrowLeft, FiSend, FiSmile, FiMoreVertical, FiHeart, FiTrash2, FiUsers } from "react-icons/fi";
 import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 
 function formatMessageTime(dateStr) {
@@ -41,6 +41,7 @@ export default function ChatWindow({
 	const dispatch = useDispatch();
 	const [input, setInput] = useState("");
 	const [isTyping, setIsTyping] = useState(false);
+	const [typingUsers, setTypingUsers] = useState([]); // for group: track who's typing
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const messagesEndRef = useRef(null);
@@ -49,8 +50,21 @@ export default function ChatWindow({
 	const prevMessagesLenRef = useRef(0);
 	const menuRef = useRef(null);
 
+	const isGroup = conversation.isGroup;
 	const otherUser = conversation.otherUser;
-	const online = otherUser && isUserOnline(otherUser.id);
+	const members = conversation.members || [];
+	const online = !isGroup && otherUser && isUserOnline(otherUser.id);
+
+	const displayName = isGroup
+		? conversation.name ||
+			members
+				.filter((m) => m.id !== currentUser.id)
+				.map((m) => m.name)
+				.join(", ") ||
+			"Group Chat"
+		: otherUser?.name || "Unknown";
+
+	const displayAvatarUrl = isGroup ? null : otherUser?.avatarUrl;
 
 	// Auto-scroll to bottom when new messages arrive
 	useEffect(() => {
@@ -81,12 +95,26 @@ export default function ChatWindow({
 		const handleTyping = ({ conversationId, userId }) => {
 			if (conversationId === conversation.id && userId !== currentUser.id) {
 				setIsTyping(true);
+				if (isGroup) {
+					setTypingUsers((prev) => {
+						if (prev.includes(userId)) return prev;
+						return [...prev, userId];
+					});
+				}
 			}
 		};
 
 		const handleStopTyping = ({ conversationId, userId }) => {
 			if (conversationId === conversation.id && userId !== currentUser.id) {
-				setIsTyping(false);
+				if (isGroup) {
+					setTypingUsers((prev) => {
+						const next = prev.filter((id) => id !== userId);
+						if (next.length === 0) setIsTyping(false);
+						return next;
+					});
+				} else {
+					setIsTyping(false);
+				}
 			}
 		};
 
@@ -204,39 +232,65 @@ export default function ChatWindow({
 					<FiArrowLeft size={20} />
 				</button>
 
-				<Link to={`/profile/${otherUser?.id}`} className="flex items-center gap-3 flex-1 min-w-0">
-					<div className="relative shrink-0">
-						{otherUser?.avatarUrl ? (
-							<img
-								src={otherUser.avatarUrl}
-								alt={otherUser.name}
-								className="h-10 w-10 rounded-full object-cover"
-							/>
-						) : (
-							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 to-sky-100 text-sm font-bold text-sky-600 dark:from-sky-900/50 dark:to-sky-800/50 dark:text-sky-400">
-								{otherUser?.name?.charAt(0).toUpperCase() || "?"}
-							</div>
-						)}
-						{online && (
-							<span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500 dark:border-gray-800" />
-						)}
+				{isGroup ? (
+					/* Group header */
+					<div className="flex items-center gap-3 flex-1 min-w-0">
+						<div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-violet-200 text-sm font-bold text-violet-600 dark:from-violet-900/50 dark:to-violet-800/50 dark:text-violet-400 shrink-0">
+							<FiUsers size={18} />
+						</div>
+						<div className="flex-1 min-w-0">
+							<p className="text-sm font-semibold text-gray-900 truncate dark:text-gray-100">
+								{displayName}
+							</p>
+							<p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+								{isTyping && typingUsers.length > 0 ? (
+									<span className="text-sky-400 font-medium">
+										{typingUsers.length === 1
+											? `${members.find((m) => m.id === typingUsers[0])?.name || "Someone"} is typing...`
+											: `${typingUsers.length} people are typing...`}
+									</span>
+								) : (
+									`${members.length} members`
+								)}
+							</p>
+						</div>
 					</div>
-					<div className="flex-1 min-w-0">
-						<p className="text-sm font-semibold text-gray-900 truncate dark:text-gray-100">
-							{otherUser?.name || "Unknown"}
-							<VerifiedBadge role={otherUser?.role} className="ml-1" />
-						</p>
-						<p className="text-xs text-gray-400 dark:text-gray-500">
-							{isTyping ? (
-								<span className="text-sky-400 font-medium">typing...</span>
-							) : online ? (
-								<span className="text-green-500">Online</span>
+				) : (
+					/* 1-on-1 header */
+					<Link to={`/profile/${otherUser?.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+						<div className="relative shrink-0">
+							{otherUser?.avatarUrl ? (
+								<img
+									src={otherUser.avatarUrl}
+									alt={otherUser.name}
+									className="h-10 w-10 rounded-full object-cover"
+								/>
 							) : (
-								"Offline"
+								<div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 to-sky-100 text-sm font-bold text-sky-600 dark:from-sky-900/50 dark:to-sky-800/50 dark:text-sky-400">
+									{otherUser?.name?.charAt(0).toUpperCase() || "?"}
+								</div>
 							)}
-						</p>
-					</div>
-				</Link>
+							{online && (
+								<span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500 dark:border-gray-800" />
+							)}
+						</div>
+						<div className="flex-1 min-w-0">
+							<p className="text-sm font-semibold text-gray-900 truncate dark:text-gray-100">
+								{otherUser?.name || "Unknown"}
+								<VerifiedBadge role={otherUser?.role} className="ml-1" />
+							</p>
+							<p className="text-xs text-gray-400 dark:text-gray-500">
+								{isTyping ? (
+									<span className="text-sky-400 font-medium">typing...</span>
+								) : online ? (
+									<span className="text-green-500">Online</span>
+								) : (
+									"Offline"
+								)}
+							</p>
+						</div>
+					</Link>
+				)}
 
 				{/* Three-dot menu */}
 				<div className="relative" ref={menuRef}>
@@ -276,21 +330,25 @@ export default function ChatWindow({
 				) : messages.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-12 text-gray-400">
 						<div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 mb-3">
-							{otherUser?.avatarUrl ? (
+							{isGroup ? (
+								<FiUsers size={28} className="text-violet-400" />
+							) : displayAvatarUrl ? (
 								<img
-									src={otherUser.avatarUrl}
-									alt={otherUser.name}
+									src={displayAvatarUrl}
+									alt={displayName}
 									className="h-16 w-16 rounded-full object-cover"
 								/>
 							) : (
 								<span className="text-2xl font-bold text-sky-400">
-									{otherUser?.name?.charAt(0).toUpperCase()}
+									{displayName.charAt(0).toUpperCase()}
 								</span>
 							)}
 						</div>
-						<p className="text-sm font-medium text-gray-600 dark:text-gray-300">{otherUser?.name}</p>
+						<p className="text-sm font-medium text-gray-600 dark:text-gray-300">{displayName}</p>
 						<p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-							Say hi to start the conversation!
+							{isGroup
+								? `${members.length} members — send the first message!`
+								: "Say hi to start the conversation!"}
 						</p>
 					</div>
 				) : (
@@ -303,6 +361,15 @@ export default function ChatWindow({
 								(idx === messages.length - 1 ||
 									messages[idx + 1]?.senderId !== msg.senderId ||
 									messages[idx + 1]?.sender?.id !== msg.sender?.id);
+							const senderName = msg.sender?.name || "Unknown";
+							// Show sender name for group chats when sender changes
+							const showSenderName =
+								isGroup &&
+								!isMine &&
+								(idx === 0 ||
+									showDate ||
+									(messages[idx - 1]?.senderId !== msg.senderId &&
+										messages[idx - 1]?.sender?.id !== msg.sender?.id));
 
 							return (
 								<div key={msg.id}>
@@ -313,6 +380,11 @@ export default function ChatWindow({
 											</span>
 										</div>
 									)}
+									{showSenderName && (
+										<p className="ml-9 mt-2 mb-0.5 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+											{senderName}
+										</p>
+									)}
 									<div
 										className={`flex items-end gap-2 mb-0.5 ${
 											isMine ? "justify-end" : "justify-start"
@@ -322,14 +394,19 @@ export default function ChatWindow({
 										{!isMine && (
 											<div className="w-7 shrink-0">
 												{showAvatar && (
-													<img
-														src={msg.sender?.avatarUrl || otherUser?.avatarUrl || undefined}
-														alt=""
-														className="h-7 w-7 rounded-full object-cover"
-														onError={(e) => {
-															e.target.style.display = "none";
-														}}
-													/>
+													<>
+														{msg.sender?.avatarUrl ? (
+															<img
+																src={msg.sender.avatarUrl}
+																alt=""
+																className="h-7 w-7 rounded-full object-cover"
+															/>
+														) : (
+															<div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 to-sky-100 text-[10px] font-bold text-sky-600 dark:from-sky-900/50 dark:to-sky-800/50 dark:text-sky-400">
+																{senderName.charAt(0).toUpperCase()}
+															</div>
+														)}
+													</>
 												)}
 											</div>
 										)}
@@ -406,7 +483,7 @@ export default function ChatWindow({
 						{isTyping && (
 							<div className="flex items-end gap-2 mb-0.5">
 								<div className="w-7 shrink-0">
-									{otherUser?.avatarUrl && (
+									{!isGroup && otherUser?.avatarUrl && (
 										<img
 											src={otherUser.avatarUrl}
 											alt=""
@@ -414,20 +491,29 @@ export default function ChatWindow({
 										/>
 									)}
 								</div>
-								<div className="rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3 dark:bg-gray-700">
-									<div className="flex gap-1">
-										<span
-											className="h-2 w-2 rounded-full bg-gray-400 animate-bounce dark:bg-gray-500"
-											style={{ animationDelay: "0ms" }}
-										/>
-										<span
-											className="h-2 w-2 rounded-full bg-gray-400 animate-bounce dark:bg-gray-500"
-											style={{ animationDelay: "150ms" }}
-										/>
-										<span
-											className="h-2 w-2 rounded-full bg-gray-400 animate-bounce dark:bg-gray-500"
-											style={{ animationDelay: "300ms" }}
-										/>
+								<div>
+									{isGroup && typingUsers.length > 0 && (
+										<p className="ml-1 mb-0.5 text-[10px] font-medium text-sky-400">
+											{typingUsers.length === 1
+												? `${members.find((m) => m.id === typingUsers[0])?.name || "Someone"}`
+												: `${typingUsers.length} people`}
+										</p>
+									)}
+									<div className="rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3 dark:bg-gray-700">
+										<div className="flex gap-1">
+											<span
+												className="h-2 w-2 rounded-full bg-gray-400 animate-bounce dark:bg-gray-500"
+												style={{ animationDelay: "0ms" }}
+											/>
+											<span
+												className="h-2 w-2 rounded-full bg-gray-400 animate-bounce dark:bg-gray-500"
+												style={{ animationDelay: "150ms" }}
+											/>
+											<span
+												className="h-2 w-2 rounded-full bg-gray-400 animate-bounce dark:bg-gray-500"
+												style={{ animationDelay: "300ms" }}
+											/>
+										</div>
 									</div>
 								</div>
 							</div>
