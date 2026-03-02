@@ -115,16 +115,18 @@ export default function ConversationList({
 									{/* Info */}
 									<div className="flex-1 min-w-0">
 										<div className="flex items-center justify-between">
-											<p
-												className={`text-sm font-semibold truncate ${
-													conv.unreadCount > 0
-														? "text-gray-900 dark:text-white"
-														: "text-gray-700 dark:text-gray-200"
-												}`}
-											>
-												{otherUser?.name || "Unknown"}
-											</p>
-											<VerifiedBadge role={otherUser?.role} size={14} />
+											<div className="flex items-center gap-1">
+												<p
+													className={`text-sm font-semibold truncate ${
+														conv.unreadCount > 0
+															? "text-gray-900 dark:text-white"
+															: "text-gray-700 dark:text-gray-200"
+													}`}
+												>
+													{otherUser?.name || "Unknown"}
+												</p>
+												<VerifiedBadge role={otherUser?.role} size={14} />
+											</div>
 											<span className="text-[11px] text-gray-400 dark:text-gray-500 shrink-0 ml-2">
 												{formatTime(lastMsg?.createdAt || conv.updatedAt)}
 											</span>

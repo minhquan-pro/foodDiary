@@ -73,8 +73,10 @@ export default function Navbar() {
 											{user.name?.charAt(0).toUpperCase()}
 										</div>
 									)}
-									<span className="hidden sm:inline">{user.name}</span>
-									<VerifiedBadge role={user.role} size={14} />
+									<div className="flex items-center gap-1">
+										<span className="hidden sm:inline">{user.name}</span>
+										<VerifiedBadge role={user.role} size={14} />
+									</div>
 								</Link>
 								<div className="ml-2 h-5 w-px bg-gray-200 dark:bg-gray-700" />
 								<button
