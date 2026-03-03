@@ -267,6 +267,9 @@ export default function PostCard({ post }) {
 							{post.restaurantName}
 						</h3>
 					</Link>
+					{post.dishName && (
+						<p className="mt-1 text-sm text-primary-600 font-medium">Dish: {post.dishName}</p>
+					)}
 					<p className="mt-1.5 flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500">
 						<FiMapPin size={13} className="text-primary-400" />
 						{post.restaurantAddress}

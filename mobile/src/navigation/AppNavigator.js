@@ -155,7 +155,7 @@ export default function AppNavigator() {
 	if (!initialized) {
 		return (
 			<View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-				<Text style={[styles.loadingText, { color: colors.text }]}>🍽️ FoodDiary</Text>
+				<Text style={[styles.loadingText, { color: colors.text }]}>🍽️ FoodShare</Text>
 			</View>
 		);
 	}

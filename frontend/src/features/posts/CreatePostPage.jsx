@@ -14,6 +14,7 @@ export default function CreatePostPage() {
 	const [form, setForm] = useState({
 		restaurantName: "",
 		restaurantAddress: "",
+		dishName: "",
 		rating: 0,
 		description: "",
 	});
@@ -38,6 +39,7 @@ export default function CreatePostPage() {
 		const formData = new FormData();
 		formData.append("image", image);
 		formData.append("restaurantName", form.restaurantName);
+		formData.append("dishName", form.dishName);
 		formData.append("restaurantAddress", form.restaurantAddress);
 		formData.append("rating", form.rating);
 		formData.append("description", form.description);
@@ -103,6 +105,22 @@ export default function CreatePostPage() {
 							className="input"
 							placeholder="e.g. The Italian Corner"
 							required
+						/>
+					</div>
+
+					{/* Dish Name (optional) */}
+					<div>
+						<label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+							<FiFileText size={15} className="text-primary-500" />
+							Dish (optional)
+						</label>
+						<input
+							type="text"
+							name="dishName"
+							value={form.dishName}
+							onChange={handleChange}
+							className="input"
+							placeholder="e.g. Phở bò"
 						/>
 					</div>
 

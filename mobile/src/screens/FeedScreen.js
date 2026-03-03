@@ -68,7 +68,7 @@ export default function FeedScreen({ navigation }) {
 	const ListHeader = () => (
 		<View style={[styles.headerContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
 			<View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-				<Text style={[styles.logo, { color: colors.text }]}>🍽️ FoodDiary</Text>
+				<Text style={[styles.logo, { color: colors.text }]}>🍽️ FoodShare</Text>
 				<View style={styles.headerActions}>
 					<TouchableOpacity
 						onPress={() => navigation.getParent()?.navigate("UserSearch")}

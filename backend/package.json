@@ -1,7 +1,7 @@
 {
-  "name": "fooddiary-backend",
+  "name": "foodshare-backend",
   "version": "1.0.0",
-  "description": "FoodDiary REST API - Express + Prisma + PostgreSQL",
+  "description": "FoodShare REST API - Express + Prisma + PostgreSQL",
   "main": "src/server.js",
   "type": "module",
   "scripts": {

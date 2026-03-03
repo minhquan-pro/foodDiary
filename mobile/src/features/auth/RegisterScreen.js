@@ -52,7 +52,7 @@ export default function RegisterScreen({ navigation }) {
 		<KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
 			<ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
 				<View style={styles.header}>
-					<Text style={styles.logo}>🍽️ FoodDiary</Text>
+					<Text style={styles.logo}>🍽️ FoodShare</Text>
 					<Text style={styles.subtitle}>Join the community</Text>
 				</View>
 

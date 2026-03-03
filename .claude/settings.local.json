@@ -6,7 +6,10 @@
       "Bash(node -e \":*)",
       "Bash(python3 -c \":*)",
       "Bash(npx expo start)",
-      "Bash(npx expo start --port 8082)"
+      "Bash(npx expo start --port 8082)",
+      "Bash(cmd /c \"tasklist | findstr /i qemu\")",
+      "Bash(echo \"Done: $?\")",
+      "Bash(node patch_fe_reactions.js)"
     ]
   }
 }

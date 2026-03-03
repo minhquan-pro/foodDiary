@@ -17,6 +17,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 	const [form, setForm] = useState({
 		restaurantName: "",
 		restaurantAddress: "",
+		dishName: "",
 		rating: 0,
 		description: "",
 	});
@@ -44,7 +45,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 	// Reset on open
 	useEffect(() => {
 		if (isOpen) {
-			setForm({ restaurantName: "", restaurantAddress: "", rating: 0, description: "" });
+			setForm({ restaurantName: "", restaurantAddress: "", dishName: "", rating: 0, description: "" });
 			setImage(null);
 			setPreview(null);
 			setDragOver(false);
@@ -335,6 +336,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 			imageUrl: URL.createObjectURL(image),
 			restaurantName: form.restaurantName,
 			restaurantAddress: form.restaurantAddress,
+			dishName: form.dishName,
 			rating: Number(form.rating),
 			description: form.description,
 			createdAt: new Date().toISOString(),
@@ -357,6 +359,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 		formData.append("image", image);
 		formData.append("restaurantName", form.restaurantName);
 		formData.append("restaurantAddress", form.restaurantAddress);
+		formData.append("dishName", form.dishName);
 		formData.append("rating", form.rating);
 		formData.append("description", form.description);
 
@@ -567,6 +570,23 @@ export default function CreatePostModal({ isOpen, onClose }) {
 											))}
 										</div>
 									)}
+								</div>
+
+								{/* Dish Name */}
+								<div>
+									<label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+										<FiFileText size={15} className="text-primary-500" />
+										Dish
+									</label>
+									<input
+										type="text"
+										name="dishName"
+										value={form.dishName}
+										onChange={handleChange}
+										className="input"
+										placeholder="e.g. Phở bò"
+										autoComplete="off"
+									/>
 								</div>
 
 								{/* Address */}

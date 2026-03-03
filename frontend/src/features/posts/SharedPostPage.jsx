@@ -58,6 +58,9 @@ export default function SharedPostPage() {
 					<h1 className="text-3xl font-bold text-gray-900 tracking-tight dark:text-gray-100">
 						{post.restaurantName}
 					</h1>
+					{post.dishName && (
+						<p className="mt-2 text-sm text-primary-600 font-medium">[Món ăn]: {post.dishName}</p>
+					)}
 					<p className="mt-2 flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
 						<FiMapPin size={14} className="text-primary-400" />
 						{post.restaurantAddress}

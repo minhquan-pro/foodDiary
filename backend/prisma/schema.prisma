@@ -1,4 +1,4 @@
-// ─── Prisma Schema ─── FoodDiary ────────────────────────────
+// ─── Prisma Schema ─── FoodShare ────────────────────────────
 
 generator client {
     provider = "prisma-client-js"
@@ -84,6 +84,7 @@ model Post {
     id                String   @id @default(uuid())
     imageUrl          String   @map("image_url")
     restaurantName    String   @map("restaurant_name")
+    dishName          String?  @map("dish_name")
     restaurantAddress String   @map("restaurant_address")
     rating            Int // 1-5
     description       String

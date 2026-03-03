@@ -21,7 +21,7 @@ async function main() {
 	const users = await Promise.all([
 		prisma.user.create({
 			data: {
-				email: "minh@fooddiary.com",
+				email: "minh@foodshare.com",
 				password,
 				name: "Minh Quân",
 				bio: "Food blogger | Yêu ẩm thực Việt Nam 🍜",
@@ -33,7 +33,7 @@ async function main() {
 		}),
 		prisma.user.create({
 			data: {
-				email: "linh@fooddiary.com",
+				email: "linh@foodshare.com",
 				password,
 				name: "Thùy Linh",
 				bio: "Đi đâu cũng ăn, ăn đâu cũng review ✨",
@@ -44,7 +44,7 @@ async function main() {
 		}),
 		prisma.user.create({
 			data: {
-				email: "nam@fooddiary.com",
+				email: "nam@foodshare.com",
 				password,
 				name: "Hoàng Nam",
 				bio: "Coffee addict ☕ | Street food hunter",
@@ -55,7 +55,7 @@ async function main() {
 		}),
 		prisma.user.create({
 			data: {
-				email: "hoa@fooddiary.com",
+				email: "hoa@foodshare.com",
 				password,
 				name: "Thanh Hoa",
 				bio: "Nấu ăn là đam mê, review là nghề 🍳",
@@ -583,10 +583,10 @@ async function main() {
 	console.log("\n🎉 Seed completed successfully!");
 	console.log("─────────────────────────────────────");
 	console.log("Test accounts (password: 123456):");
-	console.log("  📧 minh@fooddiary.com");
-	console.log("  📧 linh@fooddiary.com");
-	console.log("  📧 nam@fooddiary.com");
-	console.log("  📧 hoa@fooddiary.com");
+	console.log("  📧 minh@foodshare.com");
+	console.log("  📧 linh@foodshare.com");
+	console.log("  📧 nam@foodshare.com");
+	console.log("  📧 hoa@foodshare.com");
 	console.log("─────────────────────────────────────");
 }
 
