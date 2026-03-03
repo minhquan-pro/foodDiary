@@ -25,14 +25,21 @@ function timeAgo(dateStr) {
 
 function getNotifIcon(type) {
 	switch (type) {
+		case "like":
 		case "LIKE":
 			return "❤️";
+		case "reaction":
+			return "😊";
+		case "comment":
 		case "COMMENT":
 			return "💬";
+		case "follow":
 		case "FOLLOW":
 			return "👤";
+		case "reply":
 		case "REPLY":
 			return "↩️";
+		case "comment_like":
 		case "COMMENT_LIKE":
 			return "👍";
 		default:
@@ -146,14 +153,21 @@ export default function NotificationsScreen({ navigation }) {
 
 function getNotifMessage(type) {
 	switch (type) {
+		case "like":
 		case "LIKE":
 			return "liked your post";
+		case "reaction":
+			return "reacted to your post";
+		case "comment":
 		case "COMMENT":
 			return "commented on your post";
+		case "follow":
 		case "FOLLOW":
 			return "started following you";
+		case "reply":
 		case "REPLY":
 			return "replied to your comment";
+		case "comment_like":
 		case "COMMENT_LIKE":
 			return "liked your comment";
 		default:

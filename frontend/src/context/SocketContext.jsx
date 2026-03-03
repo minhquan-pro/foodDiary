@@ -62,6 +62,8 @@ export function SocketProvider({ children }) {
 			const postName = notification.post?.restaurantName || "your post";
 			if (notification.type === "like") {
 				toast(`${actorName} liked "${postName}"`, { icon: "❤️" });
+			} else if (notification.type === "reaction") {
+				toast(`${actorName} reacted to "${postName}"`, { icon: "😊" });
 			} else if (notification.type === "comment_like") {
 				toast(`${actorName} liked your comment on "${postName}"`, { icon: "❤️" });
 			} else if (notification.type === "reply") {

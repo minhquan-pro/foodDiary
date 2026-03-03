@@ -28,6 +28,8 @@ function NotificationItem({ notification, onRead, onClose }) {
 	const icon =
 		notification.type === "like" || notification.type === "comment_like" ? (
 			<FiHeart size={16} className="text-red-500" />
+		) : notification.type === "reaction" ? (
+			<span style={{ fontSize: 14 }}>😊</span>
 		) : notification.type === "follow" ? (
 			<FiUserPlus size={16} className="text-green-500" />
 		) : (
@@ -37,13 +39,15 @@ function NotificationItem({ notification, onRead, onClose }) {
 	const message =
 		notification.type === "like"
 			? `liked your post "${notification.post?.restaurantName || ""}"`
-			: notification.type === "comment_like"
-				? `liked your comment on "${notification.post?.restaurantName || ""}"`
-				: notification.type === "reply"
-					? `replied to your comment on "${notification.post?.restaurantName || ""}"`
-					: notification.type === "follow"
-						? "started following you"
-						: `commented on your post "${notification.post?.restaurantName || ""}"`;
+			: notification.type === "reaction"
+				? `reacted to your post "${notification.post?.restaurantName || ""}"`
+				: notification.type === "comment_like"
+					? `liked your comment on "${notification.post?.restaurantName || ""}"`
+					: notification.type === "reply"
+						? `replied to your comment on "${notification.post?.restaurantName || ""}"`
+						: notification.type === "follow"
+							? "started following you"
+							: `commented on your post "${notification.post?.restaurantName || ""}"`;
 
 	return (
 		<Link

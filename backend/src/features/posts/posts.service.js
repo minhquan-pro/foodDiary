@@ -330,15 +330,15 @@ export const togglePostReaction = async (postId, userId, emoji = "❤️") => {
 		if (existing.emoji === emoji) {
 			// Same emoji → remove (toggle off)
 			await prisma.postReaction.delete({ where: { id: existing.id } });
-			return { removed: true, emoji };
+			return { removed: true, emoji, postOwnerId: post.userId };
 		}
 		// Different emoji → switch reaction
 		await prisma.postReaction.update({ where: { id: existing.id }, data: { emoji } });
-		return { removed: false, switched: true, prevEmoji: existing.emoji, emoji };
+		return { removed: false, switched: true, prevEmoji: existing.emoji, emoji, postOwnerId: post.userId };
 	}
 
 	const created = await prisma.postReaction.create({ data: { userId, postId, emoji } });
-	return { removed: false, emoji, id: created.id };
+	return { removed: false, emoji, id: created.id, postOwnerId: post.userId };
 };
 
 /**

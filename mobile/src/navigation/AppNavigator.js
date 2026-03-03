@@ -20,6 +20,7 @@ import ChatListScreen from "../screens/ChatListScreen";
 import ChatDetailScreen from "../screens/ChatDetailScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
 import UserSearchScreen from "../screens/UserSearchScreen";
+import FollowListScreen from "../screens/FollowListScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -58,6 +59,7 @@ function FeedStackNavigator() {
 			<FeedStack.Screen name="CreatePost" component={CreatePostScreen} />
 			<FeedStack.Screen name="UserProfile" component={ProfileScreen} />
 			<FeedStack.Screen name="EditProfile" component={EditProfileScreen} />
+			<FeedStack.Screen name="FollowList" component={FollowListScreen} />
 		</FeedStack.Navigator>
 	);
 }
@@ -77,6 +79,7 @@ function ProfileStackNavigator() {
 			<ProfileStack.Screen name="MyProfile" component={ProfileScreen} />
 			<ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
 			<ProfileStack.Screen name="ProfilePostDetail" component={PostDetailScreen} />
+			<ProfileStack.Screen name="FollowList" component={FollowListScreen} />
 		</ProfileStack.Navigator>
 	);
 }

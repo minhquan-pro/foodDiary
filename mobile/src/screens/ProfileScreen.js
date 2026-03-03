@@ -129,15 +129,15 @@ export default function ProfileScreen({ route, navigation }) {
 
 	const renderHeader = () => (
 		<View style={[styles.profileHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-			{/* Back button for non-own profiles */}
-			{!isOwnProfile && (
+			{/* Back button when navigation history exists */}
+			{navigation.canGoBack() && (
 				<TouchableOpacity style={[styles.backBtn, { top: insets.top + 8 }]} onPress={() => navigation.goBack()}>
 					<Text style={styles.backBtnText}>← Back</Text>
 				</TouchableOpacity>
 			)}
 
 			{/* Avatar and stats */}
-			<View style={[styles.avatarSection, { paddingTop: isOwnProfile ? insets.top + 16 : insets.top + 48 }]}>
+			<View style={[styles.avatarSection, { paddingTop: navigation.canGoBack() ? insets.top + 48 : insets.top + 16 }]}>
 				{profile?.avatarUrl ? (
 					<TouchableOpacity activeOpacity={0.9} onPress={() => setAvatarModalVisible(true)}>
 						<Image
@@ -195,14 +195,20 @@ export default function ProfileScreen({ route, navigation }) {
 					<Text style={[styles.statNumber, { color: colors.text }]}>{profile?._count?.posts || 0}</Text>
 					<Text style={[styles.statLabel, { color: colors.textSecondary }]}>Posts</Text>
 				</View>
-				<View style={styles.stat}>
+				<TouchableOpacity
+					style={styles.stat}
+					onPress={() => navigation.navigate("FollowList", { userId, type: "followers", title: "Followers" })}
+				>
 					<Text style={[styles.statNumber, { color: colors.text }]}>{profile?._count?.followers || 0}</Text>
 					<Text style={[styles.statLabel, { color: colors.textSecondary }]}>Followers</Text>
-				</View>
-				<View style={styles.stat}>
+				</TouchableOpacity>
+				<TouchableOpacity
+					style={styles.stat}
+					onPress={() => navigation.navigate("FollowList", { userId, type: "following", title: "Following" })}
+				>
 					<Text style={[styles.statNumber, { color: colors.text }]}>{profile?._count?.following || 0}</Text>
 					<Text style={[styles.statLabel, { color: colors.textSecondary }]}>Following</Text>
-				</View>
+				</TouchableOpacity>
 			</View>
 
 			{/* Action buttons */}

@@ -20,7 +20,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import {
 	fetchPost,
-	toggleLike,
 	addComment,
 	fetchComments,
 	deleteComment,
@@ -30,6 +29,7 @@ import {
 } from "../features/posts/postsSlice";
 import StarRating from "../components/StarRating";
 import VerifiedBadge from "../components/VerifiedBadge";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { getImageUrl } from "../lib/api";
 
@@ -49,7 +49,7 @@ function timeAgo(dateStr) {
 
 // ─── Comment Item ────────────────────────────────────────────
 
-function CommentItem({ comment, currentUserId, likedCommentIds, onReply, onDelete, onToggleLike, depth = 0 }) {
+function CommentItem({ comment, currentUserId, likedCommentIds, onReply, onDelete, onToggleLike, colors, depth = 0 }) {
 	const isLiked = likedCommentIds.includes(comment.id);
 	const isOwn = currentUserId === comment.user?.id;
 
@@ -59,8 +59,15 @@ function CommentItem({ comment, currentUserId, likedCommentIds, onReply, onDelet
 				{comment.user?.avatarUrl ? (
 					<Image source={{ uri: getImageUrl(comment.user.avatarUrl) }} style={styles.commentAvatar} />
 				) : (
-					<View style={styles.commentAvatarPlaceholder}>
-						<Text style={styles.commentAvatarText}>{comment.user?.name?.charAt(0).toUpperCase()}</Text>
+					<View
+						style={[
+							styles.commentAvatarPlaceholder,
+							{ backgroundColor: colors?.primaryLight || "#FED7AA" },
+						]}
+					>
+						<Text style={[styles.commentAvatarText, { color: colors?.primary || "#F97316" }]}>
+							{comment.user?.name?.charAt(0).toUpperCase()}
+						</Text>
 					</View>
 				)}
 				<View style={styles.commentMeta}>
@@ -69,7 +76,9 @@ function CommentItem({ comment, currentUserId, likedCommentIds, onReply, onDelet
 						<VerifiedBadge role={comment.user?.role} />
 						<Text style={styles.commentTime}>{timeAgo(comment.createdAt)}</Text>
 					</View>
-					<Text style={styles.commentBody}>{comment.body}</Text>
+					<Text style={[styles.commentBody, { color: colors?.textSecondary || "#6B7280" }]}>
+						{comment.body}
+					</Text>
 					<View style={styles.commentActions}>
 						<TouchableOpacity onPress={() => onToggleLike(comment.id)} style={styles.commentAction}>
 							<Text style={[styles.commentActionText, isLiked && { color: "#EF4444" }]}>
@@ -99,6 +108,7 @@ function CommentItem({ comment, currentUserId, likedCommentIds, onReply, onDelet
 					onReply={onReply}
 					onDelete={onDelete}
 					onToggleLike={onToggleLike}
+					colors={colors}
 					depth={depth + 1}
 				/>
 			))}
@@ -119,13 +129,13 @@ export default function PostDetailScreen({ route, navigation }) {
 		comments,
 		commentsPagination,
 		likedCommentIds,
-		isPostLiked,
 		loading,
 	} = useSelector((state) => state.posts);
 
 	const [commentText, setCommentText] = useState("");
 	const [replyTo, setReplyTo] = useState(null);
 	const [imageModalVisible, setImageModalVisible] = useState(false);
+	const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
 	useEffect(() => {
 		dispatch(fetchPost(postId));
@@ -134,10 +144,6 @@ export default function PostDetailScreen({ route, navigation }) {
 			dispatch(clearCurrentPost());
 		};
 	}, [postId]);
-
-	const handleLike = () => {
-		dispatch(toggleLike(post.id));
-	};
 
 	const handleComment = () => {
 		if (!commentText.trim()) return;
@@ -164,19 +170,15 @@ export default function PostDetailScreen({ route, navigation }) {
 	};
 
 	const handleDeletePost = () => {
-		Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
-			{ text: "Cancel", style: "cancel" },
-			{
-				text: "Delete",
-				style: "destructive",
-				onPress: () => {
-					dispatch(deletePost(postId)).then(() => {
-						navigation.goBack();
-						Toast.show({ type: "success", text1: "Post deleted" });
-					});
-				},
-			},
-		]);
+		setDeleteModalVisible(true);
+	};
+
+	const confirmDeletePost = () => {
+		setDeleteModalVisible(false);
+		dispatch(deletePost(postId)).then(() => {
+			navigation.goBack();
+			Toast.show({ type: "success", text1: "Post deleted" });
+		});
 	};
 
 	const handleToggleCommentLike = (commentId) => {
@@ -218,8 +220,12 @@ export default function PostDetailScreen({ route, navigation }) {
 				</TouchableOpacity>
 				<Text style={[styles.headerTitle, { color: colors.text }]}>Post</Text>
 				{isOwnPost && (
-					<TouchableOpacity onPress={handleDeletePost}>
-						<Text style={[styles.deleteBtn, { color: "#EF4444" }]}>Delete</Text>
+					<TouchableOpacity
+						onPress={handleDeletePost}
+						style={styles.deleteBtnContainer}
+						hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+					>
+						<MaterialCommunityIcons name="trash-can-outline" size={22} color="#EF4444" />
 					</TouchableOpacity>
 				)}
 			</View>
@@ -234,6 +240,62 @@ export default function PostDetailScreen({ route, navigation }) {
 						/>
 					</TouchableOpacity>
 				)}
+
+				{/* Delete Confirmation Modal */}
+				<Modal
+					visible={deleteModalVisible}
+					transparent={true}
+					animationType="fade"
+					onRequestClose={() => setDeleteModalVisible(false)}
+				>
+					<View style={styles.deleteModalOverlay}>
+						<View
+							style={[
+								styles.deleteModalBox,
+								{
+									backgroundColor: colors.card,
+									shadowColor: "#000",
+									shadowOffset: { width: 0, height: 8 },
+									shadowOpacity: isDark ? 0.5 : 0.15,
+									shadowRadius: 24,
+									elevation: 12,
+								},
+							]}
+						>
+							{/* Warning icon */}
+							<View
+								style={[
+									styles.deleteModalIconCircle,
+									{ backgroundColor: isDark ? "#431407" : "#FFF7ED" },
+								]}
+							>
+								<Text style={styles.deleteModalIcon}>🗑️</Text>
+							</View>
+							<Text style={[styles.deleteModalTitle, { color: colors.text }]}>Delete Post?</Text>
+							<Text style={[styles.deleteModalMsg, { color: colors.textSecondary }]}>
+								This will permanently remove your post and all its comments. This action cannot be
+								undone.
+							</Text>
+							<View style={styles.deleteModalActions}>
+								<TouchableOpacity
+									style={[
+										styles.deleteModalBtn,
+										{ backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.border },
+									]}
+									onPress={() => setDeleteModalVisible(false)}
+								>
+									<Text style={[styles.deleteModalBtnText, { color: colors.text }]}>Cancel</Text>
+								</TouchableOpacity>
+								<TouchableOpacity
+									style={[styles.deleteModalBtn, styles.deleteModalBtnDanger]}
+									onPress={confirmDeletePost}
+								>
+									<Text style={[styles.deleteModalBtnText, { color: "#FFFFFF" }]}>Delete</Text>
+								</TouchableOpacity>
+							</View>
+						</View>
+					</View>
+				</Modal>
 
 				{/* Image Lightbox Modal */}
 				<Modal
@@ -292,35 +354,49 @@ export default function PostDetailScreen({ route, navigation }) {
 						</View>
 					</TouchableOpacity>
 
-					<Text style={[styles.restaurantName, { color: colors.text }]}>{post.restaurantName}</Text>
-					<Text style={[styles.address, { color: colors.textMuted }]}>📍 {post.restaurantAddress}</Text>
+					{/* Location block with orange left accent */}
+					<View style={[styles.locationBlock, { borderLeftColor: colors.primary }]}>
+						<Text style={[styles.restaurantName, { color: colors.text }]}>{post.restaurantName}</Text>
+						<Text style={[styles.address, { color: colors.textMuted }]}>📍 {post.restaurantAddress}</Text>
+					</View>
 
-					<View style={styles.ratingRow}>
-						<StarRating rating={post.rating} size={18} />
+					{/* Rating pill */}
+					<View
+						style={[
+							styles.ratingPill,
+							{ backgroundColor: isDark ? "#374151" : "#F9FAFB", borderColor: colors.border },
+						]}
+					>
+						<StarRating rating={post.rating} size={16} />
+						<Text style={[styles.ratingPillLabel, { color: colors.textSecondary }]}>Rating</Text>
 					</View>
 
 					<Text style={[styles.description, { color: colors.textSecondary }]}>{post.description}</Text>
 
-					{/* Like button */}
-					<View style={[styles.postActions, { borderTopColor: colors.inputBg }]}>
-						<TouchableOpacity
-							style={[styles.likeBtn, isPostLiked && { backgroundColor: isDark ? "#431407" : "#FEF2F2" }]}
-							onPress={handleLike}
-						>
-							<Text style={styles.likeBtnIcon}>{isPostLiked ? "❤️" : "🤍"}</Text>
-							<Text style={[styles.likeBtnText, isPostLiked && { color: "#EF4444" }]}>
-								{post._count?.likes || 0} likes
+					{/* Post stats */}
+					<View style={[styles.postActions, { borderTopColor: colors.border }]}>
+						<View style={[styles.statPill, { backgroundColor: isDark ? "#374151" : "#F3F4F6" }]}>
+							<Text style={styles.statPillIcon}>💬</Text>
+							<Text style={[styles.statPillCount, { color: colors.textSecondary }]}>
+								{post._count?.comments || 0}
 							</Text>
-						</TouchableOpacity>
-						<Text style={[styles.commentCount, { color: colors.textSecondary }]}>
-							💬 {post._count?.comments || 0} comments
-						</Text>
+							<Text style={[styles.statPillLabel, { color: colors.textMuted }]}>comments</Text>
+						</View>
 					</View>
 				</View>
 
 				{/* Comments */}
 				<View style={[styles.commentsSection, { backgroundColor: colors.card }]}>
-					<Text style={[styles.commentsTitle, { color: colors.text }]}>Comments</Text>
+					<View style={styles.commentsTitleRow}>
+						<Text style={[styles.commentsTitle, { color: colors.text }]}>Comments</Text>
+						{comments.length > 0 && (
+							<View style={[styles.commentCountBadge, { backgroundColor: colors.primary }]}>
+								<Text style={styles.commentCountBadgeText}>
+									{post._count?.comments || comments.length}
+								</Text>
+							</View>
+						)}
+					</View>
 					{comments.map((comment) => (
 						<CommentItem
 							key={comment.id}
@@ -330,6 +406,7 @@ export default function PostDetailScreen({ route, navigation }) {
 							onReply={(c) => setReplyTo(c)}
 							onDelete={handleDeleteComment}
 							onToggleLike={handleToggleCommentLike}
+							colors={colors}
 						/>
 					))}
 					{commentsPagination?.hasMore && (
@@ -489,16 +566,37 @@ const styles = StyleSheet.create({
 		color: "#9CA3AF",
 		marginTop: 2,
 	},
+	locationBlock: {
+		borderLeftWidth: 3,
+		borderLeftColor: "#F97316",
+		paddingLeft: 10,
+		marginBottom: 12,
+	},
 	restaurantName: {
 		fontSize: 22,
 		fontWeight: "800",
 		color: "#1F2937",
-		marginBottom: 4,
+		marginBottom: 2,
 	},
 	address: {
-		fontSize: 14,
+		fontSize: 13,
 		color: "#9CA3AF",
-		marginBottom: 8,
+	},
+	ratingPill: {
+		flexDirection: "row",
+		alignItems: "center",
+		alignSelf: "flex-start",
+		gap: 8,
+		borderWidth: 1,
+		borderRadius: 20,
+		paddingHorizontal: 12,
+		paddingVertical: 6,
+		marginBottom: 14,
+	},
+	ratingPillLabel: {
+		fontSize: 12,
+		fontWeight: "500",
+		color: "#6B7280",
 	},
 	ratingRow: {
 		marginBottom: 12,
@@ -511,48 +609,59 @@ const styles = StyleSheet.create({
 	postActions: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 16,
+		gap: 8,
 		marginTop: 16,
 		paddingTop: 12,
 		borderTopWidth: 1,
-		borderTopColor: "#F3F4F6",
+		borderTopColor: "#E5E7EB",
 	},
-	likeBtn: {
+	statPill: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 6,
+		gap: 5,
 		paddingHorizontal: 12,
 		paddingVertical: 6,
-		borderRadius: 8,
+		borderRadius: 20,
 	},
-	likeBtnActive: {
-		backgroundColor: "#FEF2F2",
-	},
-	likeBtnIcon: {
-		fontSize: 18,
-	},
-	likeBtnText: {
+	statPillIcon: {
 		fontSize: 14,
-		fontWeight: "600",
+	},
+	statPillCount: {
+		fontSize: 14,
+		fontWeight: "700",
 		color: "#6B7280",
 	},
-	likeBtnTextActive: {
-		color: "#EF4444",
-	},
-	commentCount: {
-		fontSize: 14,
-		color: "#6B7280",
+	statPillLabel: {
+		fontSize: 12,
+		color: "#9CA3AF",
 	},
 	commentsSection: {
 		padding: 16,
 		marginTop: 8,
 		backgroundColor: "#FFFFFF",
 	},
+	commentsTitleRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 8,
+		marginBottom: 16,
+	},
 	commentsTitle: {
-		fontSize: 18,
+		fontSize: 17,
 		fontWeight: "700",
 		color: "#1F2937",
-		marginBottom: 16,
+	},
+	commentCountBadge: {
+		borderRadius: 10,
+		paddingHorizontal: 8,
+		paddingVertical: 2,
+		minWidth: 22,
+		alignItems: "center",
+	},
+	commentCountBadgeText: {
+		fontSize: 11,
+		fontWeight: "700",
+		color: "#FFFFFF",
 	},
 	commentItem: {
 		marginBottom: 16,
@@ -570,7 +679,6 @@ const styles = StyleSheet.create({
 		width: 32,
 		height: 32,
 		borderRadius: 16,
-		backgroundColor: "#E5E7EB",
 		justifyContent: "center",
 		alignItems: "center",
 		marginRight: 8,
@@ -578,7 +686,6 @@ const styles = StyleSheet.create({
 	commentAvatarText: {
 		fontSize: 12,
 		fontWeight: "700",
-		color: "#6B7280",
 	},
 	commentMeta: {
 		flex: 1,
@@ -601,7 +708,6 @@ const styles = StyleSheet.create({
 	},
 	commentBody: {
 		fontSize: 14,
-		color: "#4B5563",
 		lineHeight: 20,
 		marginBottom: 4,
 	},
@@ -706,6 +812,67 @@ const styles = StyleSheet.create({
 	lightboxCloseText: {
 		color: "#FFFFFF",
 		fontSize: 20,
+		fontWeight: "700",
+	},
+	deleteModalOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0,0,0,0.5)",
+		justifyContent: "center",
+		alignItems: "center",
+		paddingHorizontal: 24,
+	},
+	deleteBtnContainer: {
+		padding: 4,
+		borderRadius: 8,
+	},
+	deleteModalBox: {
+		width: "100%",
+		borderRadius: 20,
+		padding: 24,
+		backgroundColor: "#FFFFFF",
+		alignItems: "center",
+	},
+	deleteModalIconCircle: {
+		width: 64,
+		height: 64,
+		borderRadius: 32,
+		justifyContent: "center",
+		alignItems: "center",
+		marginBottom: 16,
+	},
+	deleteModalIcon: {
+		fontSize: 30,
+	},
+	deleteModalTitle: {
+		fontSize: 18,
+		fontWeight: "700",
+		color: "#1F2937",
+		marginBottom: 8,
+		textAlign: "center",
+	},
+	deleteModalMsg: {
+		fontSize: 14,
+		color: "#6B7280",
+		lineHeight: 22,
+		marginBottom: 28,
+		textAlign: "center",
+	},
+	deleteModalActions: {
+		flexDirection: "row",
+		gap: 12,
+		width: "100%",
+	},
+	deleteModalBtn: {
+		flex: 1,
+		paddingVertical: 14,
+		borderRadius: 12,
+		alignItems: "center",
+	},
+	deleteModalBtnDanger: {
+		backgroundColor: "#EF4444",
+	},
+	deleteModalBtnText: {
+		fontSize: 15,
 		fontWeight: "700",
 	},
 });

@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(node -e \"require\\(''react-icons/fi''\\)\")",
-      "Bash(npx vite build)"
+      "Bash(npx vite build)",
+      "Bash(node -e \":*)",
+      "Bash(python3 -c \":*)",
+      "Bash(npx expo start)",
+      "Bash(npx expo start --port 8082)"
     ]
   }
 }

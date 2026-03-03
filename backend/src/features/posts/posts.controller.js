@@ -2,6 +2,7 @@
 import catchAsync from "../../utils/catchAsync.js";
 import { ApiError } from "../../utils/ApiError.js";
 import * as postsService from "./posts.service.js";
+import * as notificationsService from "../notifications/notifications.service.js";
 
 export const createPost = catchAsync(async (req, res) => {
 	if (!req.file) throw ApiError.badRequest("Food image is required");
@@ -95,11 +96,28 @@ export const toggleReaction = catchAsync(async (req, res) => {
 
 	const result = await postsService.togglePostReaction(postId, userId, emoji);
 
-	// Emit socket event so clients can update realtime
 	const io = req.app.get("io");
+
+	// Create notification for post owner when adding/switching reaction (not removing)
+	if (!result.removed) {
+		try {
+			const notification = await notificationsService.createNotification({
+				type: "reaction",
+				userId: result.postOwnerId,
+				actorId: userId,
+				postId,
+			});
+			if (notification) {
+				io.to(`user:${result.postOwnerId}`).emit("notification:new", notification);
+			}
+		} catch (err) {
+			console.error("Failed to create reaction notification", err);
+		}
+	}
+
+	// Emit socket event so clients can update realtime
 	try {
 		const rx = await postsService.getPostReactions(postId, null);
-		// Emit to a post-specific room and globally
 		io.to(`post:${postId}`).emit("post:reactionUpdated", { postId, reactions: rx.reactions });
 		io.emit("post:reactionUpdated", { postId, reactions: rx.reactions });
 	} catch (err) {

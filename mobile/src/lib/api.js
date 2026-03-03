@@ -7,10 +7,11 @@ import { Platform } from "react-native";
 // Physical device needs the actual IP address of your machine
 const getServerUrl = () => {
 	if (__DEV__) {
-		if (Platform.OS === "android") {
-			return "http://10.0.2.2:4000";
+		if (Platform.OS === "web") {
+			return "http://localhost:4000";
 		}
-		return "http://localhost:4000";
+		// Physical device (Android/iOS): use host machine's actual IP
+		return "http://172.17.37.97:4000";
 	}
 	return "https://your-production-url.com";
 };

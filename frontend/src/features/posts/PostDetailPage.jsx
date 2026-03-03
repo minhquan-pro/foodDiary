@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
 	fetchPost,
 	clearCurrentPost,
-	toggleLike,
 	addComment,
 	deleteComment,
 	deletePost,
@@ -202,12 +201,11 @@ export default function PostDetailPage() {
 	const { id } = useParams();
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
-	const { currentPost: post, comments, likedCommentIds, isPostLiked, userReaction, loading } = useSelector(
-		(state) => state.posts,
-	);
+	const { currentPost: post, comments, likedCommentIds, userReaction, loading } = useSelector((state) => state.posts);
 	const { user: currentUser } = useSelector((state) => state.auth);
 	const [commentText, setCommentText] = useState("");
 	const [showPicker, setShowPicker] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const pickerLeaveTimer = useRef(null);
 
 	const handleEmojiClick = async (emoji) => {
@@ -260,8 +258,6 @@ export default function PostDetailPage() {
 		return () => dispatch(clearCurrentPost());
 	}, [dispatch, id]);
 
-	const handleLike = () => dispatch(toggleLike(id));
-
 	const handleShare = () => {
 		const shareUrl = `${window.location.origin}/share/${post.shareSlug}`;
 		navigator.clipboard.writeText(shareUrl);
@@ -275,8 +271,12 @@ export default function PostDetailPage() {
 		setCommentText("");
 	};
 
-	const handleDelete = async () => {
-		if (!window.confirm("Are you sure you want to delete this post?")) return;
+	const handleDelete = () => {
+		setShowDeleteModal(true);
+	};
+
+	const confirmDelete = async () => {
+		setShowDeleteModal(false);
 		const result = await dispatch(deletePost(id));
 		if (deletePost.fulfilled.match(result)) {
 			toast.success("Post deleted");
@@ -290,6 +290,35 @@ export default function PostDetailPage() {
 
 	return (
 		<div className="mx-auto max-w-6xl px-6 py-8 animate-fade-in">
+			{/* Delete Confirmation Modal */}
+			{showDeleteModal && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center">
+					<div
+						className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+						onClick={() => setShowDeleteModal(false)}
+					/>
+					<div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800">
+						<h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Delete Post</h3>
+						<p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+							Are you sure you want to delete this post? This action cannot be undone.
+						</p>
+						<div className="mt-6 flex gap-3">
+							<button
+								onClick={() => setShowDeleteModal(false)}
+								className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={confirmDelete}
+								className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 transition-colors"
+							>
+								Delete
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 			{/* Back button */}
 			<button
 				onClick={() => navigate(-1)}
@@ -375,30 +404,6 @@ export default function PostDetailPage() {
 
 							{/* Actions */}
 							<div className="mt-6 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 dark:border-gray-700">
-								{/* Like */}
-								<button
-									onClick={handleLike}
-									className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-										isPostLiked
-											? "text-red-500 bg-red-50 dark:bg-red-900/20"
-											: "text-gray-500 hover:text-red-500 hover:bg-red-50 dark:text-gray-400 dark:hover:bg-red-900/20"
-									}`}
-								>
-									{isPostLiked ? (
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 24 24"
-											fill="currentColor"
-											className="w-[18px] h-[18px]"
-										>
-											<path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-										</svg>
-									) : (
-										<FiHeart size={18} />
-									)}
-									<span>{post._count?.likes || 0}</span>
-								</button>
-
 								{/* Reaction button (hover picker) */}
 								<div className="relative flex items-center gap-2">
 									<div
@@ -415,7 +420,10 @@ export default function PostDetailPage() {
 												{EMOJIS.map((e) => (
 													<button
 														key={e}
-														onClick={() => { handleEmojiClick(e); setShowPicker(false); }}
+														onClick={() => {
+															handleEmojiClick(e);
+															setShowPicker(false);
+														}}
 														title={EMOJI_LABELS[e]}
 														className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 hover:bg-gray-50 dark:hover:bg-gray-700 ${userReaction === e ? "scale-110 bg-gray-100 dark:bg-gray-700" : ""}`}
 													>
@@ -434,7 +442,11 @@ export default function PostDetailPage() {
 											) : (
 												<FiSmile size={18} className="text-gray-500 dark:text-gray-400" />
 											)}
-											<span className={userReaction ? "font-semibold" : "text-gray-500 dark:text-gray-400"}>
+											<span
+												className={
+													userReaction ? "font-semibold" : "text-gray-500 dark:text-gray-400"
+												}
+											>
 												{userReaction ? EMOJI_LABELS[userReaction] : "React"}
 											</span>
 										</button>
@@ -447,7 +459,12 @@ export default function PostDetailPage() {
 													.sort((a, b) => b.count - a.count)
 													.slice(0, 3)
 													.map((r) => (
-														<span key={r.emoji} className="text-base -ml-0.5 first:ml-0 leading-none">{r.emoji}</span>
+														<span
+															key={r.emoji}
+															className="text-base -ml-0.5 first:ml-0 leading-none"
+														>
+															{r.emoji}
+														</span>
 													))}
 											</div>
 											<span className="text-sm text-gray-500 dark:text-gray-400">

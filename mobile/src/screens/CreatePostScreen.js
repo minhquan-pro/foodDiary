@@ -92,6 +92,14 @@ export default function CreatePostScreen({ navigation }) {
 			});
 			return;
 		}
+		if (!image) {
+			Toast.show({
+				type: "error",
+				text1: "Photo is required",
+				text2: "Please add a food photo",
+			});
+			return;
+		}
 
 		setSubmitting(true);
 
