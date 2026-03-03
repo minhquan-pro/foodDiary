@@ -6,7 +6,7 @@ export const createPostSchema = z.object({
 	// Optional dish name
 	dishName: z.string().max(200).optional(),
 	rating: z.coerce.number().int().min(1).max(5),
-	description: z.string().min(1, "Description is required").max(2000),
+	description: z.string().max(2000).optional().default(""),
 });
 
 export const updatePostSchema = z.object({

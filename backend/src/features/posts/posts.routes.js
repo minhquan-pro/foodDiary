@@ -17,6 +17,8 @@ router.get("/locations", postsController.getLocations);
 router.get("/restaurant-names", postsController.searchRestaurantNames);
 router.get("/feed", postsController.getFeed);
 router.get("/friends", postsController.getFriendsFeed);
+router.get("/explore", postsController.getExplorePosts);
+router.get("/top-restaurants", postsController.getTopRestaurants);
 router.get("/:id", postsController.getPostById);
 router.get("/:id/reactions", postsController.getReactions);
 router.get("/:id/reactions/users", postsController.getReactionUsers);

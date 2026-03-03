@@ -376,3 +376,93 @@ export const getReactionUsers = async (postId, emoji = null) => {
 	});
 	return rows.map((r) => ({ ...r.user, emoji: r.emoji }));
 };
+
+/**
+ * Get explore posts sorted by trending score, top rating, or newest.
+ * Trending = reactions×3 + comments×2, computed in JS over last 7 days.
+ */
+export const getExplorePosts = async ({ sortBy = "trending", page = 1, limit = 21, userId = null }) => {
+	const skip = (page - 1) * limit;
+
+	const where = {};
+	if (userId) {
+		const blockedIds = await getAllBlockedUserIds(userId);
+		if (blockedIds.length > 0) where.userId = { notIn: blockedIds };
+	}
+
+	if (sortBy === "trending") {
+		const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+		where.createdAt = { gte: sevenDaysAgo };
+
+		const POOL_MULTIPLIER = 10;
+		let posts = await prisma.post.findMany({
+			where,
+			orderBy: { createdAt: "desc" },
+			take: limit * POOL_MULTIPLIER,
+			include: POST_INCLUDE,
+		});
+
+		posts = await attachReactionsToPosts(posts);
+
+		const scored = posts
+			.map((p) => {
+				const totalReactions = (p.reactions || []).reduce((sum, r) => sum + r.count, 0);
+				return { ...p, _score: totalReactions * 3 + (p._count?.comments || 0) * 2 };
+			})
+			.sort((a, b) => b._score - a._score || new Date(b.createdAt) - new Date(a.createdAt));
+
+		const total = scored.length;
+		return {
+			posts: scored.slice(skip, skip + limit),
+			pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+		};
+	}
+
+	const orderBy = sortBy === "top" ? [{ rating: "desc" }, { createdAt: "desc" }] : { createdAt: "desc" };
+
+	let [posts, total] = await Promise.all([
+		prisma.post.findMany({ where, orderBy, skip, take: limit, include: POST_INCLUDE }),
+		prisma.post.count({ where }),
+	]);
+
+	posts = await attachReactionsToPosts(posts);
+
+	return {
+		posts,
+		pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
+};
+
+/**
+ * Get top restaurants by post count with average rating and a cover image.
+ */
+export const getTopRestaurants = async ({ limit = 10 }) => {
+	const groups = await prisma.post.groupBy({
+		by: ["restaurantName"],
+		_count: { id: true },
+		_avg: { rating: true },
+		orderBy: { _count: { id: "desc" } },
+		take: limit,
+	});
+
+	if (groups.length === 0) return [];
+
+	const representativePosts = await Promise.all(
+		groups.map((g) =>
+			prisma.post.findFirst({
+				where: { restaurantName: g.restaurantName },
+				orderBy: { createdAt: "desc" },
+				select: { id: true, imageUrl: true, restaurantAddress: true },
+			})
+		)
+	);
+
+	return groups.map((g, i) => ({
+		restaurantName: g.restaurantName,
+		postCount: g._count.id,
+		avgRating: Math.round((g._avg.rating || 0) * 10) / 10,
+		imageUrl: representativePosts[i]?.imageUrl || null,
+		representativePostId: representativePosts[i]?.id || null,
+		restaurantAddress: representativePosts[i]?.restaurantAddress || null,
+	}));
+};

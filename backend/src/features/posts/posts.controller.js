@@ -140,3 +140,20 @@ export const getReactionUsers = catchAsync(async (req, res) => {
 	const users = await postsService.getReactionUsers(postId, emoji || null);
 	res.json({ success: true, data: { users } });
 });
+
+export const getExplorePosts = catchAsync(async (req, res) => {
+	const sortBy = req.query.sortBy || "trending";
+	const page = parseInt(req.query.page, 10) || 1;
+	const limit = Math.min(parseInt(req.query.limit, 10) || 21, 63);
+	if (!["trending", "top", "newest"].includes(sortBy)) {
+		throw ApiError.badRequest("sortBy must be one of: trending, top, newest");
+	}
+	const result = await postsService.getExplorePosts({ sortBy, page, limit, userId: req.user?.id || null });
+	res.json({ success: true, data: result });
+});
+
+export const getTopRestaurants = catchAsync(async (req, res) => {
+	const limit = Math.min(parseInt(req.query.limit, 10) || 10, 20);
+	const restaurants = await postsService.getTopRestaurants({ limit });
+	res.json({ success: true, data: { restaurants } });
+});
