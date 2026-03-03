@@ -5,6 +5,7 @@ export const updateProfileSchema = z.object({
 	bio: z.string().max(500).optional(),
 	location: z.string().max(100).optional().nullable(),
 	birthday: z.string().optional().nullable(),
+	showBirthYear: z.preprocess((v) => v === true || v === "true", z.boolean()).optional(),
 	facebook: z.string().max(255).optional().nullable(),
 	instagram: z.string().max(255).optional().nullable(),
 	twitter: z.string().max(255).optional().nullable(),

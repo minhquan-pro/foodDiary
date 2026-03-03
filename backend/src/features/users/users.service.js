@@ -9,6 +9,7 @@ const USER_SELECT = {
 	bio: true,
 	location: true,
 	birthday: true,
+	showBirthYear: true,
 	avatarUrl: true,
 	facebook: true,
 	instagram: true,
