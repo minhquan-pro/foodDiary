@@ -5,6 +5,7 @@ import postsReducer from "../features/posts/postsSlice.js";
 import profileReducer from "../features/profile/profileSlice.js";
 import chatReducer from "../features/chat/chatSlice.js";
 import notificationsReducer from "../features/notifications/notificationsSlice.js";
+import exploreReducer from "../features/explore/exploreSlice.js";
 
 export const store = configureStore({
 	reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
 		profile: profileReducer,
 		chat: chatReducer,
 		notifications: notificationsReducer,
+		explore: exploreReducer,
 	},
 	devTools: import.meta.env.DEV,
 });

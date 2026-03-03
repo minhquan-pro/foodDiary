@@ -15,6 +15,7 @@ import FeedPage from "../features/feed/FeedPage.jsx";
 import PostDetailPage from "../features/posts/PostDetailPage.jsx";
 import SharedPostPage from "../features/posts/SharedPostPage.jsx";
 import ProfilePage from "../features/profile/ProfilePage.jsx";
+import ExplorePage from "../features/explore/ExplorePage.jsx";
 import ChatWidget from "../components/ChatWidget.jsx";
 
 export default function App() {
@@ -49,7 +50,6 @@ export default function App() {
 							</ProtectedRoute>
 						}
 					/>
-
 					<Route
 						path="/posts/:id"
 						element={
@@ -63,6 +63,14 @@ export default function App() {
 						element={
 							<ProtectedRoute>
 								<ProfilePage />
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path="/explore"
+						element={
+							<ProtectedRoute>
+								<ExplorePage />
 							</ProtectedRoute>
 						}
 					/>
