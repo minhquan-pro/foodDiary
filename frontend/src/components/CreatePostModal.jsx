@@ -684,6 +684,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 									<label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
 										<FiFileText size={15} className="text-primary-500" />
 										Your Review
+										<span className="ml-auto text-xs font-normal text-gray-400">Không bắt buộc</span>
 									</label>
 									<textarea
 										name="description"
@@ -691,7 +692,6 @@ export default function CreatePostModal({ isOpen, onClose }) {
 										onChange={handleChange}
 										className="input min-h-[120px] resize-none"
 										placeholder="Tell us about your experience — What did you order? How was the taste, presentation, and service?"
-										required
 									/>
 									<p className="mt-1.5 text-right text-xs text-gray-400 dark:text-gray-500">
 										{charCount} characters

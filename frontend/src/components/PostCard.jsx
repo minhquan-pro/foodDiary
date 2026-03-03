@@ -170,16 +170,9 @@ export default function PostCard({ post }) {
 	const totalReactions = (post.reactions || []).reduce((sum, r) => sum + r.count, 0);
 
 	return (
-		<div className="card group animate-fade-in h-full flex flex-col">
+		<div className="card group animate-fade-in min-h-80 flex flex-col">
 			{/* Image */}
 			<div className="block relative overflow-hidden">
-				<ImageLightbox src={post.imageUrl} alt={post.restaurantName}>
-					<img
-						src={post.imageUrl}
-						alt={post.restaurantName}
-						className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-					/>
-				</ImageLightbox>
 				<div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 				{/* Rating badge on image */}
 				<div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 shadow-sm dark:bg-gray-800/90 pointer-events-none">
@@ -267,18 +260,33 @@ export default function PostCard({ post }) {
 							{post.restaurantName}
 						</h3>
 					</Link>
-					{post.dishName && (
-						<p className="mt-1 text-sm text-primary-600 font-medium">Dish: {post.dishName}</p>
-					)}
-					<p className="mt-1.5 flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500">
-						<FiMapPin size={13} className="text-primary-400" />
-						{post.restaurantAddress}
-					</p>
+					<div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+						{post.dishName && (
+							<span className="inline-flex items-center gap-1 rounded-full bg-orange-50 border border-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-600 dark:bg-orange-900/20 dark:border-orange-800/40 dark:text-orange-400">
+								🍽️ {post.dishName}
+							</span>
+						)}
+						<span className="flex items-center gap-1 text-sm text-gray-400 dark:text-gray-500">
+							<FiMapPin size={12} className="text-primary-400 shrink-0" />
+							<span className="truncate">{post.restaurantAddress}</span>
+						</span>
+					</div>
 
 					{/* Description */}
 					<p className="mt-3 line-clamp-2 text-md text-gray-700 leading-relaxed dark:text-gray-300">
 						{post.description}
 					</p>
+
+
+					<div className="mt-3 rounded-xl overflow-hidden cursor-pointer ring-1 ring-gray-100 dark:ring-gray-700/50">
+						<ImageLightbox src={post.imageUrl} alt={post.restaurantName}>
+							<img
+								src={post.imageUrl}
+								alt={post.restaurantName}
+								className="w-full aspect-[4/3] object-cover transition-transform duration-500 group-hover:scale-105"
+							/>
+						</ImageLightbox>
+					</div>
 				</div>
 
 				{/* Actions */}
