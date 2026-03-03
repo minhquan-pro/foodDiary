@@ -8,6 +8,7 @@ const USER_SELECT = {
 	role: true,
 	bio: true,
 	location: true,
+	birthday: true,
 	avatarUrl: true,
 	facebook: true,
 	instagram: true,
@@ -116,6 +117,9 @@ export const updateProfile = async (userId, data, avatarFile) => {
 	const updateData = { ...data };
 	if (avatarFile) {
 		updateData.avatarUrl = `/uploads/${avatarFile.filename}`;
+	}
+	if (updateData.birthday !== undefined) {
+		updateData.birthday = updateData.birthday ? new Date(updateData.birthday) : null;
 	}
 
 	return prisma.user.update({

@@ -34,6 +34,7 @@ import {
 	FiHeart,
 	FiMapPin,
 	FiCalendar,
+	FiGift,
 } from "react-icons/fi";
 import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaGithub } from "react-icons/fa6";
 import toast from "react-hot-toast";
@@ -50,6 +51,7 @@ export default function ProfilePage() {
 		name: "",
 		bio: "",
 		location: "",
+		birthday: "",
 		facebook: "",
 		instagram: "",
 		twitter: "",
@@ -83,6 +85,7 @@ export default function ProfilePage() {
 				name: profile.name || "",
 				bio: profile.bio || "",
 				location: profile.location || "",
+				birthday: profile.birthday ? new Date(profile.birthday).toISOString().slice(0, 10) : "",
 				facebook: profile.facebook || "",
 				instagram: profile.instagram || "",
 				twitter: profile.twitter || "",
@@ -116,6 +119,7 @@ export default function ProfilePage() {
 		if (editForm.name) formData.append("name", editForm.name);
 		if (editForm.bio !== undefined) formData.append("bio", editForm.bio);
 		if (editForm.location !== undefined) formData.append("location", editForm.location);
+		if (editForm.birthday !== undefined) formData.append("birthday", editForm.birthday);
 		if (avatarFile) formData.append("avatar", avatarFile);
 		const socialFields = ["facebook", "instagram", "twitter", "tiktok", "youtube", "github"];
 		socialFields.forEach((field) => {
@@ -139,6 +143,7 @@ export default function ProfilePage() {
 				name: profile.name || "",
 				bio: profile.bio || "",
 				location: profile.location || "",
+				birthday: profile.birthday ? new Date(profile.birthday).toISOString().slice(0, 10) : "",
 				facebook: profile.facebook || "",
 				instagram: profile.instagram || "",
 				twitter: profile.twitter || "",
@@ -273,6 +278,22 @@ export default function ProfilePage() {
 								</div>
 							</div>
 
+							{/* Birthday */}
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-1.5 dark:text-gray-300">
+									Ngày sinh
+								</label>
+								<div className="flex items-center gap-2.5">
+									<FiGift size={16} className="text-gray-400 shrink-0 w-5" />
+									<input
+										type="date"
+										value={editForm.birthday}
+										onChange={(e) => setEditForm((prev) => ({ ...prev, birthday: e.target.value }))}
+										className="input text-sm"
+										max={new Date().toISOString().slice(0, 10)}
+									/>
+								</div>
+							</div>
 							{/* Social Media */}
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-3 dark:text-gray-300">
@@ -454,11 +475,13 @@ export default function ProfilePage() {
 				<div className="mt-3 space-y-2.5">
 					{/* Bio */}
 					{profile.bio && (
-						<p className="text-sm text-gray-700 leading-relaxed dark:text-gray-300">{profile.bio}</p>
+						<p className="text-sm font-semibold text-gray-700 leading-relaxed dark:text-gray-300">
+							{profile.bio}
+						</p>
 					)}
 
 					{/* Location + Joined row */}
-					{(profile.location || profile.createdAt) && (
+					{(profile.location || profile.createdAt || profile.birthday) && (
 						<div className="flex flex-wrap gap-x-4 gap-y-1">
 							{profile.location && (
 								<span className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
@@ -470,7 +493,16 @@ export default function ProfilePage() {
 								<span className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
 									<FiCalendar size={13} className="text-primary-400 shrink-0" />
 									Tham gia{" "}
-									{new Date(profile.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
+									{new Date(profile.createdAt).toLocaleDateString("vi-VN", {
+										month: "long",
+										year: "numeric",
+									})}
+								</span>
+							)}
+							{profile.birthday && (
+								<span className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+									<FiGift size={13} className="text-primary-400 shrink-0" />
+									{new Date(profile.birthday).toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" })}
 								</span>
 							)}
 						</div>
@@ -479,12 +511,42 @@ export default function ProfilePage() {
 					{/* Social icons */}
 					{(() => {
 						const socials = [
-							{ key: "facebook", icon: FaFacebookF, label: "Facebook", color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20" },
-							{ key: "instagram", icon: FaInstagram, label: "Instagram", color: "text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20" },
-							{ key: "twitter", icon: FaXTwitter, label: "X (Twitter)", color: "text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800" },
-							{ key: "tiktok", icon: FaTiktok, label: "TikTok", color: "text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800" },
-							{ key: "youtube", icon: FaYoutube, label: "YouTube", color: "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" },
-							{ key: "github", icon: FaGithub, label: "GitHub", color: "text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800" },
+							{
+								key: "facebook",
+								icon: FaFacebookF,
+								label: "Facebook",
+								color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+							},
+							{
+								key: "instagram",
+								icon: FaInstagram,
+								label: "Instagram",
+								color: "text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20",
+							},
+							{
+								key: "twitter",
+								icon: FaXTwitter,
+								label: "X (Twitter)",
+								color: "text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800",
+							},
+							{
+								key: "tiktok",
+								icon: FaTiktok,
+								label: "TikTok",
+								color: "text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800",
+							},
+							{
+								key: "youtube",
+								icon: FaYoutube,
+								label: "YouTube",
+								color: "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20",
+							},
+							{
+								key: "github",
+								icon: FaGithub,
+								label: "GitHub",
+								color: "text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800",
+							},
 						];
 						const active = socials.filter(({ key }) => profile[key]);
 						if (active.length === 0) return null;
