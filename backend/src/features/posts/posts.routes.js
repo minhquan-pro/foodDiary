@@ -19,6 +19,7 @@ router.get("/feed", postsController.getFeed);
 router.get("/friends", postsController.getFriendsFeed);
 router.get("/:id", postsController.getPostById);
 router.get("/:id/reactions", postsController.getReactions);
+router.get("/:id/reactions/users", postsController.getReactionUsers);
 
 router.post("/", upload.single("image"), validate(createPostSchema), postsController.createPost);
 

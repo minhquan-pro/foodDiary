@@ -133,3 +133,10 @@ export const getReactions = catchAsync(async (req, res) => {
 	const data = await postsService.getPostReactions(postId, userId);
 	res.json({ success: true, data });
 });
+
+export const getReactionUsers = catchAsync(async (req, res) => {
+	const { id: postId } = req.params;
+	const { emoji } = req.query;
+	const users = await postsService.getReactionUsers(postId, emoji || null);
+	res.json({ success: true, data: { users } });
+});

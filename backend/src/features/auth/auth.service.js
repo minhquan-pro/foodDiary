@@ -4,7 +4,7 @@ import prisma from "../../utils/prisma.js";
 import config from "../../config/index.js";
 import { ApiError } from "../../utils/ApiError.js";
 
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = 10;
 
 /**
  * Generate a JWT for a given user.

@@ -362,3 +362,17 @@ export const getPostReactions = async (postId, userId = null) => {
 
 	return { reactions: result, userReactions };
 };
+
+export const getReactionUsers = async (postId, emoji = null) => {
+	const where = { postId };
+	if (emoji) where.emoji = emoji;
+	const rows = await prisma.postReaction.findMany({
+		where,
+		select: {
+			emoji: true,
+			user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+		},
+		orderBy: { createdAt: "desc" },
+	});
+	return rows.map((r) => ({ ...r.user, emoji: r.emoji }));
+};

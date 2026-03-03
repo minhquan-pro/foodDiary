@@ -1,4 +1,5 @@
 import * as usersService from "./users.service.js";
+import * as blocksService from "../blocks/blocks.service.js";
 import * as notificationsService from "../notifications/notifications.service.js";
 import catchAsync from "../../utils/catchAsync.js";
 
@@ -16,7 +17,17 @@ export const searchUsers = catchAsync(async (req, res) => {
 
 export const getProfile = catchAsync(async (req, res) => {
 	const user = await usersService.getProfile(req.params.id);
-	res.json({ success: true, data: { user } });
+	let isFollowing = false;
+	let isBlocked = false;
+	if (req.user && req.user.id !== req.params.id) {
+		const [followStatus, blockStatus] = await Promise.all([
+			usersService.getFollowStatus(req.user.id, req.params.id),
+			blocksService.getBlockStatus(req.user.id, req.params.id),
+		]);
+		isFollowing = followStatus.following;
+		isBlocked = blockStatus.blocked;
+	}
+	res.json({ success: true, data: { user, isFollowing, isBlocked } });
 });
 
 export const getUserPosts = catchAsync(async (req, res) => {
