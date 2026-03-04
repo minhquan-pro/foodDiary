@@ -17,6 +17,7 @@ router.patch("/conversations/:id/read", chatController.markAsRead);
 router.patch("/conversations/:id/name", chatController.updateGroupName);
 router.post("/conversations/:id/members", chatController.addGroupMembers);
 router.delete("/conversations/:id/members/:userId", chatController.removeGroupMember);
+router.delete("/conversations/:id/messages/:messageId", chatController.deleteMessage);
 router.post("/conversations/:id/messages/:messageId/react", chatController.toggleReaction);
 router.get("/unread-count", chatController.getUnreadCount);
 
