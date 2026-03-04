@@ -1,16 +1,35 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../lib/api.js";
-import { toggleLike, createPost } from "../posts/postsSlice.js";
-import { updateCurrentPostReactions as updatePostSliceReactions } from "../posts/postsSlice.js";
+import { toggleLike, createPost, toggleBookmark } from "../posts/postsSlice.js";
 
 // ─── Async Thunks ────────────────────────────────────────────
 
+export const fetchStories = createAsyncThunk("feed/fetchStories", async (_, { rejectWithValue }) => {
+	try {
+		const { data } = await api.get("/posts/stories");
+		return data.data.stories;
+	} catch (err) {
+		return rejectWithValue(err.message);
+	}
+});
+
+export const createStory = createAsyncThunk("feed/createStory", async ({ file, caption }, { rejectWithValue }) => {
+	try {
+		const formData = new FormData();
+		formData.append("image", file);
+		if (caption) formData.append("caption", caption);
+		const { data } = await api.post("/posts/stories", formData);
+		return data.data.story;
+	} catch (err) {
+		return rejectWithValue(err.message);
+	}
+});
+
 export const fetchFeed = createAsyncThunk(
 	"feed/fetchFeed",
-	async ({ page = 1, limit = 10, location = null } = {}, { rejectWithValue }) => {
+	async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
 		try {
-			let url = `/posts/feed?page=${page}&limit=${limit}`;
-			if (location) url += `&location=${encodeURIComponent(location)}`;
+			const url = `/posts/feed?page=${page}&limit=${limit}`;
 			const { data } = await api.get(url);
 			return data.data;
 		} catch (err) {
@@ -30,15 +49,6 @@ export const fetchFriendsFeed = createAsyncThunk(
 		}
 	},
 );
-
-export const fetchLocations = createAsyncThunk("feed/fetchLocations", async (_, { rejectWithValue }) => {
-	try {
-		const { data } = await api.get("/posts/locations");
-		return data.data.locations;
-	} catch (err) {
-		return rejectWithValue(err.message);
-	}
-});
 
 export const fetchFollowingIds = createAsyncThunk("feed/fetchFollowingIds", async (_, { rejectWithValue }) => {
 	try {
@@ -105,12 +115,13 @@ const initialState = {
 	loading: false,
 	error: null,
 	feedType: "latest", // "latest" | "friends"
-	locations: [],
-	selectedLocation: null,
 	followingIds: [],
 	blockedIds: [],
 	likedPostIds: [],
+	bookmarkedPostIds: [],
 	userReactedPosts: {}, // { [postId]: emoji }
+	stories: [],
+	storiesLoading: false,
 };
 
 const feedSlice = createSlice({
@@ -126,11 +137,6 @@ const feedSlice = createSlice({
 		},
 		setFeedType(state, action) {
 			state.feedType = action.payload;
-			state.posts = [];
-			state.pagination = null;
-		},
-		setSelectedLocation(state, action) {
-			state.selectedLocation = action.payload;
 			state.posts = [];
 			state.pagination = null;
 		},
@@ -154,6 +160,18 @@ const feedSlice = createSlice({
 		},
 	},
 	extraReducers: (builder) => {
+		// Stories
+		builder
+			.addCase(fetchStories.pending, (state) => { state.storiesLoading = true; })
+			.addCase(fetchStories.fulfilled, (state, action) => { state.storiesLoading = false; state.stories = action.payload; })
+			.addCase(fetchStories.rejected, (state) => { state.storiesLoading = false; })
+			.addCase(createStory.fulfilled, (state, action) => {
+				// Prepend new story; replace if user already has one
+				const existing = state.stories.findIndex((s) => s.userId === action.payload.userId);
+				if (existing !== -1) state.stories.splice(existing, 1);
+				state.stories.unshift(action.payload);
+			});
+
 		// Fetch latest feed
 		builder
 			.addCase(fetchFeed.pending, (state) => {
@@ -162,15 +180,17 @@ const feedSlice = createSlice({
 			})
 			.addCase(fetchFeed.fulfilled, (state, action) => {
 				state.loading = false;
-				const { posts, pagination, likedPostIds = [], userReactedPosts = {} } = action.payload;
+				const { posts, pagination, likedPostIds = [], userReactedPosts = {}, bookmarkedPostIds = [] } = action.payload;
 				if (pagination.page === 1) {
 					state.posts = posts;
 					state.likedPostIds = likedPostIds;
 					state.userReactedPosts = userReactedPosts;
+					state.bookmarkedPostIds = bookmarkedPostIds;
 				} else {
 					state.posts = [...state.posts, ...posts];
 					state.likedPostIds = [...new Set([...state.likedPostIds, ...likedPostIds])];
 					state.userReactedPosts = { ...state.userReactedPosts, ...userReactedPosts };
+					state.bookmarkedPostIds = [...new Set([...state.bookmarkedPostIds, ...bookmarkedPostIds])];
 				}
 				state.pagination = pagination;
 			})
@@ -187,15 +207,17 @@ const feedSlice = createSlice({
 			})
 			.addCase(fetchFriendsFeed.fulfilled, (state, action) => {
 				state.loading = false;
-				const { posts, pagination, likedPostIds = [], userReactedPosts = {} } = action.payload;
+				const { posts, pagination, likedPostIds = [], userReactedPosts = {}, bookmarkedPostIds = [] } = action.payload;
 				if (pagination.page === 1) {
 					state.posts = posts;
 					state.likedPostIds = likedPostIds;
 					state.userReactedPosts = userReactedPosts;
+					state.bookmarkedPostIds = bookmarkedPostIds;
 				} else {
 					state.posts = [...state.posts, ...posts];
 					state.likedPostIds = [...new Set([...state.likedPostIds, ...likedPostIds])];
 					state.userReactedPosts = { ...state.userReactedPosts, ...userReactedPosts };
+					state.bookmarkedPostIds = [...new Set([...state.bookmarkedPostIds, ...bookmarkedPostIds])];
 				}
 				state.pagination = pagination;
 			})
@@ -203,11 +225,6 @@ const feedSlice = createSlice({
 				state.loading = false;
 				state.error = action.payload;
 			});
-
-		// Fetch locations
-		builder.addCase(fetchLocations.fulfilled, (state, action) => {
-			state.locations = action.payload;
-		});
 
 		// Fetch following IDs
 		builder.addCase(fetchFollowingIds.fulfilled, (state, action) => {
@@ -272,12 +289,36 @@ const feedSlice = createSlice({
 				post._count.likes += isLiked ? -1 : 1;
 			}
 		});
+
+
+		// Optimistic toggle bookmark from feed
+		builder.addCase(toggleBookmark.pending, (state, action) => {
+			const postId = action.meta.arg;
+			const isBookmarked = state.bookmarkedPostIds.includes(postId);
+			if (isBookmarked) {
+				state.bookmarkedPostIds = state.bookmarkedPostIds.filter((id) => id !== postId);
+			} else {
+				state.bookmarkedPostIds.push(postId);
+			}
+			const post = state.posts.find((p) => p.id === postId);
+			if (post?._count) post._count.bookmarks = (post._count.bookmarks ?? 0) + (isBookmarked ? -1 : 1);
+		});
+		builder.addCase(toggleBookmark.rejected, (state, action) => {
+			const postId = action.meta.arg;
+			const isBookmarked = state.bookmarkedPostIds.includes(postId);
+			if (isBookmarked) {
+				state.bookmarkedPostIds = state.bookmarkedPostIds.filter((id) => id !== postId);
+			} else {
+				state.bookmarkedPostIds.push(postId);
+			}
+			const post = state.posts.find((p) => p.id === postId);
+			if (post?._count) post._count.bookmarks = (post._count.bookmarks ?? 0) + (isBookmarked ? -1 : 1);
+		});
 	},
 });
 
 export const {
 	setFeedType,
-	setSelectedLocation,
 	clearFeed,
 	addOptimisticPost,
 	removeOptimisticPost,
