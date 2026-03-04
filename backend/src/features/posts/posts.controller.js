@@ -43,35 +43,24 @@ export const getFriendsFeed = catchAsync(async (req, res) => {
 });
 
 export const getPostById = catchAsync(async (req, res) => {
-	const { post, userReaction } = await postsService.getPostById(req.params.id, req.user?.id);
+	const { post, userReaction, isPostBookmarked, isPostLiked } = await postsService.getPostById(req.params.id, req.user?.id);
 
 	// Get liked comment IDs for current user
 	let likedCommentIds = [];
-	let isPostLiked = false;
-	if (req.user) {
-		// Check if user liked this post
-		const like = await (
-			await import("../../utils/prisma.js")
-		).default.like.findUnique({
-			where: { userId_postId: { userId: req.user.id, postId: post.id } },
-		});
-		isPostLiked = !!like;
-
-		if (post.comments?.length) {
-			const extractIds = (comments) => {
-				const ids = [];
-				for (const c of comments) {
-					ids.push(c.id);
-					if (c.replies) ids.push(...extractIds(c.replies));
-				}
-				return ids;
-			};
-			const { getUserLikedCommentIds } = await import("../comments/comments.service.js");
-			likedCommentIds = await getUserLikedCommentIds(req.user.id, extractIds(post.comments));
-		}
+	if (req.user && post.comments?.length) {
+		const extractIds = (comments) => {
+			const ids = [];
+			for (const c of comments) {
+				ids.push(c.id);
+				if (c.replies) ids.push(...extractIds(c.replies));
+			}
+			return ids;
+		};
+		const { getUserLikedCommentIds } = await import("../comments/comments.service.js");
+		likedCommentIds = await getUserLikedCommentIds(req.user.id, extractIds(post.comments));
 	}
 
-	res.json({ success: true, data: { post, likedCommentIds, isPostLiked, userReaction } });
+	res.json({ success: true, data: { post, likedCommentIds, isPostLiked, isPostBookmarked, userReaction } });
 });
 
 export const getPostBySlug = catchAsync(async (req, res) => {
@@ -156,4 +145,32 @@ export const getTopRestaurants = catchAsync(async (req, res) => {
 	const limit = Math.min(parseInt(req.query.limit, 10) || 10, 20);
 	const restaurants = await postsService.getTopRestaurants({ limit });
 	res.json({ success: true, data: { restaurants } });
+});
+
+export const getMapPosts = catchAsync(async (req, res) => {
+	const posts = await postsService.getMapPosts();
+	res.json({ success: true, data: { posts } });
+});
+
+export const getStories = catchAsync(async (req, res) => {
+	const stories = await postsService.getStories(req.user.id);
+	res.json({ success: true, data: { stories } });
+});
+
+export const createStory = catchAsync(async (req, res) => {
+	if (!req.file) throw ApiError.badRequest("Image is required");
+	const imageUrl = `/uploads/${req.file.filename}`;
+	const caption = req.body.caption || "";
+	const story = await postsService.createStory(req.user.id, caption, imageUrl);
+	res.status(201).json({ success: true, data: { story } });
+});
+
+export const recordView = catchAsync(async (req, res) => {
+	await postsService.recordPostView(req.params.id, req.user.id);
+	res.status(204).send();
+});
+
+export const getViewers = catchAsync(async (req, res) => {
+	const viewers = await postsService.getPostViewers(req.params.id, req.user.id);
+	res.json({ success: true, data: { viewers } });
 });
