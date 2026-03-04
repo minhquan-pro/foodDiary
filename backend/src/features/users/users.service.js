@@ -76,37 +76,43 @@ export const getProfile = async (userId) => {
 export const getUserPosts = async (userId, { page = 1, limit = 10 }, currentUserId = null) => {
 	const skip = (page - 1) * limit;
 
+	const where = { userId, isStory: false };
+
 	const [posts, total] = await Promise.all([
 		prisma.post.findMany({
-			where: { userId },
+			where,
 			orderBy: { createdAt: "desc" },
 			skip,
 			take: limit,
 			include: {
 				user: { select: { id: true, name: true, role: true, avatarUrl: true } },
-				_count: { select: { likes: true, comments: true } },
+				_count: { select: { likes: true, comments: true, bookmarks: true, views: true } },
 			},
 		}),
-		prisma.post.count({ where: { userId } }),
+		prisma.post.count({ where }),
 	]);
 
-	// Get liked post IDs and user's reactions in parallel
+	// Get liked post IDs, user reactions, and bookmarked post IDs in parallel
 	let likedPostIds = [];
 	let userReactedPosts = {};
+	let bookmarkedPostIds = [];
 	if (currentUserId && posts.length > 0) {
 		const postIds = posts.map((p) => p.id);
-		const [likes, userRxs] = await Promise.all([
+		const [likes, userRxs, bookmarks] = await Promise.all([
 			prisma.like.findMany({ where: { userId: currentUserId, postId: { in: postIds } }, select: { postId: true } }),
 			prisma.postReaction.findMany({ where: { userId: currentUserId, postId: { in: postIds } }, select: { postId: true, emoji: true } }),
+			prisma.bookmark.findMany({ where: { userId: currentUserId, postId: { in: postIds } }, select: { postId: true } }),
 		]);
 		likedPostIds = likes.map((l) => l.postId);
 		for (const r of userRxs) userReactedPosts[r.postId] = r.emoji;
+		bookmarkedPostIds = bookmarks.map((b) => b.postId);
 	}
 
 	return {
 		posts,
 		likedPostIds,
 		userReactedPosts,
+		bookmarkedPostIds,
 		pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
 	};
 };
