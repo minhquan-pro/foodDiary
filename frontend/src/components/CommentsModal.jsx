@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { fetchComments, addComment, deleteComment, toggleCommentLike } from "../features/posts/postsSlice.js";
-import { FiMessageCircle, FiHeart, FiSend, FiTrash2, FiCornerDownRight, FiX } from "react-icons/fi";
+import { FiMessageCircle, FiHeart, FiSend, FiTrash2, FiCornerDownRight, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import VerifiedBadge from "./VerifiedBadge.jsx";
 
 function timeAgo(dateStr) {
@@ -24,6 +24,7 @@ function CommentItem({ comment, postId, currentUser, depth = 0, likedCommentIds,
 	const dispatch = useDispatch();
 	const [showReplyForm, setShowReplyForm] = useState(false);
 	const [replyText, setReplyText] = useState("");
+	const [showReplies, setShowReplies] = useState(depth < 1);
 
 	const handleReply = (e) => {
 		e.preventDefault();
@@ -46,6 +47,7 @@ function CommentItem({ comment, postId, currentUser, depth = 0, likedCommentIds,
 	const isLiked = likedCommentIds?.includes(comment.id);
 	const likeCount = comment._count?.commentLikes || 0;
 	const maxDepth = 3;
+	const replyCount = comment.replies?.length || 0;
 
 	return (
 		<div className={`${depth > 0 ? "ml-6 border-l-2 border-primary-100 pl-3 dark:border-primary-900/40" : ""}`}>
@@ -151,19 +153,40 @@ function CommentItem({ comment, postId, currentUser, depth = 0, likedCommentIds,
 			</div>
 
 			{/* Nested replies */}
-			{comment.replies && comment.replies.length > 0 && (
+			{replyCount > 0 && (
 				<div className="mt-1">
-					{comment.replies.map((reply) => (
-						<CommentItem
-							key={reply.id}
-							comment={{ ...reply, parentId: comment.id }}
-							postId={postId}
-							currentUser={currentUser}
-							depth={depth + 1}
-							likedCommentIds={likedCommentIds}
-							parentUser={comment.user}
-						/>
-					))}
+					{depth >= 1 && !showReplies ? (
+						<button
+							onClick={() => setShowReplies(true)}
+							className="ml-3 mt-0.5 flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors dark:text-primary-400 dark:hover:text-primary-300"
+						>
+							<FiChevronDown size={13} />
+							Xem thêm {replyCount} trả lời
+						</button>
+					) : (
+						<>
+							{comment.replies.map((reply) => (
+								<CommentItem
+									key={reply.id}
+									comment={{ ...reply, parentId: comment.id }}
+									postId={postId}
+									currentUser={currentUser}
+									depth={depth + 1}
+									likedCommentIds={likedCommentIds}
+									parentUser={comment.user}
+								/>
+							))}
+							{depth >= 1 && (
+								<button
+									onClick={() => setShowReplies(false)}
+									className="ml-3 mt-0.5 flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors dark:hover:text-gray-300"
+								>
+									<FiChevronUp size={13} />
+									Ẩn trả lời
+								</button>
+							)}
+						</>
+					)}
 				</div>
 			)}
 		</div>
