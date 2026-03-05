@@ -17,6 +17,7 @@ import SharedPostPage from "../features/posts/SharedPostPage.jsx";
 import ProfilePage from "../features/profile/ProfilePage.jsx";
 import ExplorePage from "../features/explore/ExplorePage.jsx";
 import MapPage from "../features/map/MapPage.jsx";
+import BookmarksPage from "../features/bookmarks/BookmarksPage.jsx";
 import ChatWidget from "../components/ChatWidget.jsx";
 
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
 					<Route path="/profile/:id" element={<ProfilePage />} />
 					<Route path="/explore" element={<ExplorePage />} />
 					<Route path="/map" element={<MapPage />} />
+					<Route path="/bookmarks" element={<BookmarksPage />} />
 				</Routes>
 			</main>
 			<ChatWidget />
