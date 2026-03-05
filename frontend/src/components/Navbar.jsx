@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice.js";
 import { useTheme } from "../context/ThemeContext.jsx";
-import { FiHome, FiPlus, FiUser, FiLogOut, FiSearch, FiSun, FiMoon, FiCompass } from "react-icons/fi";
+import { FiHome, FiPlus, FiUser, FiLogOut, FiSearch, FiSun, FiMoon, FiCompass, FiMap } from "react-icons/fi";
 import CreatePostModal from "./CreatePostModal.jsx";
 import NotificationBell from "./NotificationBell.jsx";
 import VerifiedBadge from "./VerifiedBadge.jsx";
@@ -58,6 +58,10 @@ export default function Navbar() {
 								<Link to="/explore" className={navLinkClass("/explore")}>
 									<FiCompass size={18} />
 									<span className="hidden sm:inline">Explore</span>
+								</Link>
+								<Link to="/map" className={navLinkClass("/map")}>
+									<FiMap size={18} />
+									<span className="hidden sm:inline">Map</span>
 								</Link>
 								<NotificationBell />
 								<Link to={`/profile/${user.id}`} className={navLinkClass(`/profile/${user.id}`)}>

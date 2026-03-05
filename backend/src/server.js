@@ -23,6 +23,8 @@ import chatRoutes from "./features/chat/chat.routes.js";
 import notificationsRoutes from "./features/notifications/notifications.routes.js";
 import bookmarksRoutes from "./features/bookmarks/bookmarks.routes.js";
 import announcementsRoutes from "./features/announcements/announcements.routes.js";
+import mapRoutes from "./features/map/map.routes.js";
+import storiesRoutes from "./features/stories/stories.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,6 +66,8 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/bookmarks", bookmarksRoutes);
 app.use("/api/announcements", announcementsRoutes);
+app.use("/api/map", mapRoutes);
+app.use("/api/stories", storiesRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

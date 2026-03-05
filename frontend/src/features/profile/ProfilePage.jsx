@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
 	fetchProfile,
 	fetchUserPosts,
+	fetchSavedPosts,
 	clearProfile,
 	followUser,
 	unfollowUser,
@@ -35,15 +36,17 @@ import {
 	FiMapPin,
 	FiCalendar,
 	FiGift,
+	FiBookmark,
 } from "react-icons/fi";
 import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaGithub } from "react-icons/fa6";
+import api from "../../lib/api.js";
 import toast from "react-hot-toast";
 
 export default function ProfilePage() {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	const { user: profile, posts, pagination, isFollowing, isBlocked, loading } = useSelector((state) => state.profile);
+	const { user: profile, posts, pagination, savedPosts, savedPagination, savedLoading, isFollowing, isBlocked, loading } = useSelector((state) => state.profile);
 	const { user: currentUser } = useSelector((state) => state.auth);
 
 	const [editing, setEditing] = useState(false);
@@ -67,6 +70,7 @@ export default function ProfilePage() {
 	const [reportReason, setReportReason] = useState("spam");
 	const [reportDetails, setReportDetails] = useState("");
 	const [followModal, setFollowModal] = useState({ open: false, type: "followers" });
+	const [activeTab, setActiveTab] = useState("reviews");
 
 	const isOwnProfile = currentUser?.id === id;
 
@@ -79,6 +83,17 @@ export default function ProfilePage() {
 		}
 		return () => dispatch(clearProfile());
 	}, [dispatch, id, isOwnProfile, currentUser]);
+
+	useEffect(() => {
+		if (isOwnProfile && activeTab === "saved") {
+			dispatch(fetchSavedPosts({ page: 1 }));
+		}
+	}, [dispatch, isOwnProfile, activeTab]);
+
+	const handleLoadMoreSaved = () => {
+		if (!savedPagination || savedPagination.page >= savedPagination.totalPages) return;
+		dispatch(fetchSavedPosts({ page: savedPagination.page + 1 }));
+	};
 
 	useEffect(() => {
 		if (profile) {
@@ -616,34 +631,79 @@ export default function ProfilePage() {
 					</button>
 				</div>
 
+				{/* Tabs — own profile only */}
+				{isOwnProfile && (
+					<div className="flex border-b border-gray-200 dark:border-gray-700 mt-6">
+						{["reviews", "saved"].map((tab) => (
+							<button
+								key={tab}
+								onClick={() => setActiveTab(tab)}
+								className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+									activeTab === tab
+										? "border-gray-900 text-gray-900 dark:border-white dark:text-white"
+										: "border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400"
+								}`}
+							>
+								{tab === "reviews" ? "Reviews" : "🔖 Saved"}
+							</button>
+						))}
+					</div>
+				)}
+
 				{/* Posts */}
 				<div className="mt-8 pb-12">
-					<h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 mb-5 dark:text-gray-100">
-						<FiGrid size={18} className="text-primary-500" />
-						Reviews
-					</h3>
-
-					{posts.length === 0 ? (
-						<div className="py-16 text-center">
-							<FiGrid size={32} className="mx-auto text-gray-200 mb-3 dark:text-gray-600" />
-							<p className="text-sm text-gray-400 dark:text-gray-500">
-								{isOwnProfile ? "You haven't posted any reviews yet." : "No reviews yet."}
-							</p>
-						</div>
-					) : (
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-							{posts.map((post) => (
-								<PostCard key={post.id} post={post} />
-							))}
-						</div>
+					{(!isOwnProfile || activeTab === "reviews") && (
+						<>
+							{posts.length === 0 ? (
+								<div className="py-16 text-center">
+									<FiGrid size={32} className="mx-auto text-gray-200 mb-3 dark:text-gray-600" />
+									<p className="text-sm text-gray-400 dark:text-gray-500">
+										{isOwnProfile ? "You haven't posted any reviews yet." : "No reviews yet."}
+									</p>
+								</div>
+							) : (
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+									{posts.map((post) => (
+										<PostCard key={post.id} post={post} />
+									))}
+								</div>
+							)}
+							{pagination && pagination.page < pagination.totalPages && (
+								<div className="mt-8 text-center">
+									<button onClick={handleLoadMore} className="btn-outline btn-lg">
+										Load More
+									</button>
+								</div>
+							)}
+						</>
 					)}
 
-					{pagination && pagination.page < pagination.totalPages && (
-						<div className="mt-8 text-center">
-							<button onClick={handleLoadMore} className="btn-outline btn-lg">
-								Load More
-							</button>
-						</div>
+					{isOwnProfile && activeTab === "saved" && (
+						<>
+							{savedLoading && savedPosts.length === 0 ? (
+								<div className="py-16 text-center">
+									<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto" />
+								</div>
+							) : savedPosts.length === 0 ? (
+								<div className="py-16 text-center">
+									<FiBookmark size={32} className="mx-auto text-gray-200 mb-3 dark:text-gray-600" />
+									<p className="text-sm text-gray-400 dark:text-gray-500">Chưa có bài nào được lưu.</p>
+								</div>
+							) : (
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+									{savedPosts.map((post) => (
+										<PostCard key={post.id} post={post} />
+									))}
+								</div>
+							)}
+							{savedPagination && savedPagination.page < savedPagination.totalPages && (
+								<div className="mt-8 text-center">
+									<button onClick={handleLoadMoreSaved} disabled={savedLoading} className="btn-outline btn-lg disabled:opacity-50">
+										{savedLoading ? "Đang tải..." : "Load More"}
+									</button>
+								</div>
+							)}
+						</>
 					)}
 				</div>
 			</div>

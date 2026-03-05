@@ -21,6 +21,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 		rating: 0,
 		description: "",
 	});
+	const [coords, setCoords] = useState({ latitude: null, longitude: null });
 	const [image, setImage] = useState(null);
 	const [preview, setPreview] = useState(null);
 	const [dragOver, setDragOver] = useState(false);
@@ -46,6 +47,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 	useEffect(() => {
 		if (isOpen) {
 			setForm({ restaurantName: "", restaurantAddress: "", dishName: "", rating: 0, description: "" });
+			setCoords({ latitude: null, longitude: null });
 			setImage(null);
 			setPreview(null);
 			setDragOver(false);
@@ -173,6 +175,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 			restaurantName: place.name,
 			restaurantAddress: place.address,
 		}));
+		setCoords({ latitude: parseFloat(place.lat), longitude: parseFloat(place.lon) });
 		setNameSuggestions([]);
 		setShowNameSuggestions(false);
 	};
@@ -224,6 +227,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 
 	const handleSelectSuggestion = (suggestion) => {
 		setForm((prev) => ({ ...prev, restaurantAddress: suggestion.display_name }));
+		setCoords({ latitude: parseFloat(suggestion.lat), longitude: parseFloat(suggestion.lon) });
 		setShowSuggestions(false);
 		setAddressSuggestions([]);
 	};
@@ -262,6 +266,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 					const data = await res.json();
 					if (data.display_name) {
 						setForm((prev) => ({ ...prev, restaurantAddress: data.display_name }));
+						setCoords({ latitude, longitude });
 						toast.success("Location detected!");
 					} else {
 						toast.error("Could not determine address");
@@ -362,6 +367,8 @@ export default function CreatePostModal({ isOpen, onClose }) {
 		formData.append("dishName", form.dishName);
 		formData.append("rating", form.rating);
 		formData.append("description", form.description);
+		if (coords.latitude != null) formData.append("latitude", coords.latitude);
+		if (coords.longitude != null) formData.append("longitude", coords.longitude);
 
 		const result = await dispatch(createPost(formData));
 		if (createPost.rejected.match(result)) {

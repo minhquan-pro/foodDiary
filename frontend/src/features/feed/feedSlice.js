@@ -2,28 +2,42 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../lib/api.js";
 import { toggleLike, createPost, toggleBookmark } from "../posts/postsSlice.js";
 
-// ─── Async Thunks ────────────────────────────────────────────
+// ─── Story Thunks ─────────────────────────────────────────────
 
 export const fetchStories = createAsyncThunk("feed/fetchStories", async (_, { rejectWithValue }) => {
 	try {
-		const { data } = await api.get("/posts/stories");
+		const { data } = await api.get("/stories");
 		return data.data.stories;
 	} catch (err) {
 		return rejectWithValue(err.message);
 	}
 });
 
-export const createStory = createAsyncThunk("feed/createStory", async ({ file, caption }, { rejectWithValue }) => {
+export const createStory = createAsyncThunk(
+	"feed/createStory",
+	async ({ file, caption }, { rejectWithValue }) => {
+		try {
+			const formData = new FormData();
+			formData.append("image", file);
+			if (caption) formData.append("caption", caption);
+			const { data } = await api.post("/stories", formData);
+			return data.data.story;
+		} catch (err) {
+			return rejectWithValue(err.message);
+		}
+	}
+);
+
+export const deleteStory = createAsyncThunk("feed/deleteStory", async (storyId, { rejectWithValue }) => {
 	try {
-		const formData = new FormData();
-		formData.append("image", file);
-		if (caption) formData.append("caption", caption);
-		const { data } = await api.post("/posts/stories", formData);
-		return data.data.story;
+		await api.delete(`/stories/${storyId}`);
+		return storyId;
 	} catch (err) {
 		return rejectWithValue(err.message);
 	}
 });
+
+// ─── Async Thunks ────────────────────────────────────────────
 
 export const fetchFeed = createAsyncThunk(
 	"feed/fetchFeed",
@@ -160,18 +174,6 @@ const feedSlice = createSlice({
 		},
 	},
 	extraReducers: (builder) => {
-		// Stories
-		builder
-			.addCase(fetchStories.pending, (state) => { state.storiesLoading = true; })
-			.addCase(fetchStories.fulfilled, (state, action) => { state.storiesLoading = false; state.stories = action.payload; })
-			.addCase(fetchStories.rejected, (state) => { state.storiesLoading = false; })
-			.addCase(createStory.fulfilled, (state, action) => {
-				// Prepend new story; replace if user already has one
-				const existing = state.stories.findIndex((s) => s.userId === action.payload.userId);
-				if (existing !== -1) state.stories.splice(existing, 1);
-				state.stories.unshift(action.payload);
-			});
-
 		// Fetch latest feed
 		builder
 			.addCase(fetchFeed.pending, (state) => {
@@ -244,6 +246,26 @@ const feedSlice = createSlice({
 		// Fetch blocked IDs
 		builder.addCase(fetchBlockedIds.fulfilled, (state, action) => {
 			state.blockedIds = action.payload;
+		});
+
+		// Stories
+		builder
+			.addCase(fetchStories.pending, (state) => { state.storiesLoading = true; })
+			.addCase(fetchStories.fulfilled, (state, action) => {
+				state.storiesLoading = false;
+				state.stories = action.payload;
+			})
+			.addCase(fetchStories.rejected, (state) => { state.storiesLoading = false; });
+
+		builder.addCase(createStory.fulfilled, (state, action) => {
+			// Replace own story or prepend
+			const idx = state.stories.findIndex((s) => s.userId === action.payload.userId);
+			if (idx !== -1) state.stories.splice(idx, 1);
+			state.stories.unshift(action.payload);
+		});
+
+		builder.addCase(deleteStory.fulfilled, (state, action) => {
+			state.stories = state.stories.filter((s) => s.id !== action.payload);
 		});
 
 		// Block from feed — add to blocked list and remove posts by that user

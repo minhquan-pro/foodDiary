@@ -67,6 +67,15 @@ export const fetchComments = createAsyncThunk(
 	},
 );
 
+export const toggleBookmark = createAsyncThunk("posts/toggleBookmark", async (postId, { rejectWithValue }) => {
+	try {
+		const { data } = await api.post(`/bookmarks/${postId}`);
+		return { postId, bookmarked: data.data.bookmarked };
+	} catch (err) {
+		return rejectWithValue(err.message);
+	}
+});
+
 export const deletePost = createAsyncThunk("posts/deletePost", async (postId, { rejectWithValue }) => {
 	try {
 		await api.delete(`/posts/${postId}`);
@@ -105,6 +114,7 @@ const initialState = {
 	commentsPagination: null,
 	likedCommentIds: [],
 	isPostLiked: false,
+	isPostBookmarked: false,
 	userReaction: null, // emoji string or null
 	loading: false,
 	error: null,
@@ -120,6 +130,7 @@ const postsSlice = createSlice({
 			state.commentsPagination = null;
 			state.likedCommentIds = [];
 			state.isPostLiked = false;
+			state.isPostBookmarked = false;
 			state.userReaction = null;
 		},
 		updateCurrentPostReactions(state, action) {
@@ -326,6 +337,23 @@ const postsSlice = createSlice({
 		// Delete post
 		builder.addCase(deletePost.fulfilled, (state) => {
 			state.currentPost = null;
+		});
+
+		// Toggle bookmark on post detail (optimistic)
+		builder.addCase(toggleBookmark.pending, (state, action) => {
+			if (state.currentPost?.id === action.meta.arg) {
+				state.isPostBookmarked = !state.isPostBookmarked;
+			}
+		});
+		builder.addCase(toggleBookmark.rejected, (state, action) => {
+			if (state.currentPost?.id === action.meta.arg) {
+				state.isPostBookmarked = !state.isPostBookmarked;
+			}
+		});
+		builder.addCase(toggleBookmark.fulfilled, (state, action) => {
+			if (state.currentPost?.id === action.payload.postId) {
+				state.isPostBookmarked = action.payload.bookmarked;
+			}
 		});
 	},
 });

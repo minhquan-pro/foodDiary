@@ -16,6 +16,7 @@ import PostDetailPage from "../features/posts/PostDetailPage.jsx";
 import SharedPostPage from "../features/posts/SharedPostPage.jsx";
 import ProfilePage from "../features/profile/ProfilePage.jsx";
 import ExplorePage from "../features/explore/ExplorePage.jsx";
+import MapPage from "../features/map/MapPage.jsx";
 import ChatWidget from "../components/ChatWidget.jsx";
 
 export default function App() {
@@ -37,43 +38,16 @@ export default function App() {
 			<main className="pb-12">
 				<Routes>
 					{/* Public */}
+					<Route path="/" element={<FeedPage />} />
 					<Route path="/login" element={<LoginPage />} />
 					<Route path="/register" element={<RegisterPage />} />
 					<Route path="/share/:slug" element={<SharedPostPage />} />
 
 					{/* Protected */}
-					<Route
-						path="/"
-						element={
-							<ProtectedRoute>
-								<FeedPage />
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/posts/:id"
-						element={
-							<ProtectedRoute>
-								<PostDetailPage />
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/profile/:id"
-						element={
-							<ProtectedRoute>
-								<ProfilePage />
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/explore"
-						element={
-							<ProtectedRoute>
-								<ExplorePage />
-							</ProtectedRoute>
-						}
-					/>
+					<Route path="/posts/:id" element={<PostDetailPage />} />
+					<Route path="/profile/:id" element={<ProfilePage />} />
+					<Route path="/explore" element={<ExplorePage />} />
+					<Route path="/map" element={<MapPage />} />
 				</Routes>
 			</main>
 			<ChatWidget />

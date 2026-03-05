@@ -15,8 +15,6 @@ router.use(authenticate);
 
 router.get("/locations", postsController.getLocations);
 router.get("/restaurant-names", postsController.searchRestaurantNames);
-router.get("/stories", postsController.getStories);
-router.post("/stories", upload.single("image"), postsController.createStory);
 router.get("/feed", postsController.getFeed);
 router.get("/friends", postsController.getFriendsFeed);
 router.get("/explore", postsController.getExplorePosts);

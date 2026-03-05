@@ -7,6 +7,8 @@ export const createPostSchema = z.object({
 	dishName: z.string().max(200).optional(),
 	rating: z.coerce.number().int().min(1).max(5),
 	description: z.string().max(2000).optional().default(""),
+	latitude: z.coerce.number().optional(),
+	longitude: z.coerce.number().optional(),
 });
 
 export const updatePostSchema = z.object({

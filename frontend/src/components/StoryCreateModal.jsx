@@ -37,10 +37,10 @@ export default function StoryCreateModal({ onClose }) {
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 			<div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-			<div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-gray-900 shadow-2xl animate-fade-in overflow-hidden">
+			<div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-gray-900 shadow-2xl overflow-hidden">
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-gray-700">
-					<h3 className="font-bold text-gray-900 dark:text-gray-100">Tạo story mới</h3>
+					<h3 className="font-bold text-gray-900 dark:text-gray-100">Hôm nay tôi ăn gì 🍽️</h3>
 					<button
 						onClick={onClose}
 						className="h-8 w-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -49,8 +49,8 @@ export default function StoryCreateModal({ onClose }) {
 					</button>
 				</div>
 
-				{/* Image picker */}
 				<div className="p-4">
+					{/* Image picker */}
 					{preview ? (
 						<div className="relative rounded-xl overflow-hidden aspect-[9/16] max-h-72 bg-black">
 							<img src={preview} alt="preview" className="w-full h-full object-cover" />
@@ -64,33 +64,27 @@ export default function StoryCreateModal({ onClose }) {
 					) : (
 						<button
 							onClick={() => inputRef.current?.click()}
-							className="flex flex-col items-center justify-center gap-3 w-full aspect-[9/16] max-h-72 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600 transition-colors bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary-500 dark:hover:text-primary-400"
+							className="flex flex-col items-center justify-center gap-3 w-full aspect-[9/16] max-h-72 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary-400 transition-colors bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-primary-500"
 						>
 							<FiImage size={36} />
-							<span className="text-sm font-medium">Chọn ảnh</span>
+							<span className="text-sm font-medium">Chọn ảnh món ăn</span>
 						</button>
 					)}
-					<input
-						ref={inputRef}
-						type="file"
-						accept="image/*"
-						className="hidden"
-						onChange={handleFileChange}
-					/>
+					<input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 				</div>
 
 				{/* Caption */}
-				<div className="px-4 pb-2">
+				<div className="px-4 pb-3">
 					<textarea
 						value={caption}
 						onChange={(e) => setCaption(e.target.value)}
-						placeholder="Thêm caption... (tuỳ chọn)"
+						placeholder="Ăn ở đâu? Ngon không? ..."
 						rows={2}
-						className="w-full resize-none rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-600"
+						maxLength={200}
+						className="w-full resize-none rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
 					/>
 				</div>
 
-				{/* Submit */}
 				<div className="px-4 pb-4">
 					<button
 						onClick={handleSubmit}
@@ -102,7 +96,7 @@ export default function StoryCreateModal({ onClose }) {
 						) : (
 							<FiSend size={15} />
 						)}
-						{loading ? "Đang đăng..." : "Đăng Story"}
+						{loading ? "Đang đăng..." : "Đăng Story · 24h"}
 					</button>
 				</div>
 			</div>

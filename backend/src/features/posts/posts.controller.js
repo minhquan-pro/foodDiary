@@ -152,19 +152,6 @@ export const getMapPosts = catchAsync(async (req, res) => {
 	res.json({ success: true, data: { posts } });
 });
 
-export const getStories = catchAsync(async (req, res) => {
-	const stories = await postsService.getStories(req.user.id);
-	res.json({ success: true, data: { stories } });
-});
-
-export const createStory = catchAsync(async (req, res) => {
-	if (!req.file) throw ApiError.badRequest("Image is required");
-	const imageUrl = `/uploads/${req.file.filename}`;
-	const caption = req.body.caption || "";
-	const story = await postsService.createStory(req.user.id, caption, imageUrl);
-	res.status(201).json({ success: true, data: { story } });
-});
-
 export const recordView = catchAsync(async (req, res) => {
 	await postsService.recordPostView(req.params.id, req.user.id);
 	res.status(204).send();

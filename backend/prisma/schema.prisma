@@ -64,6 +64,9 @@ model User {
 
     announcements Announcement[]
     postViews     PostView[]
+    userLocation  UserLocation?
+    stories       Story[]
+    storyViews    StoryView[]
 
     @@map("users")
 }
@@ -98,7 +101,6 @@ model Post {
     rating            Int // 1-5
     description       String
     shareSlug         String   @unique @default(uuid()) @map("share_slug")
-    isStory           Boolean  @default(false) @map("is_story")
     userId            String   @map("user_id")
     createdAt         DateTime @default(now()) @map("created_at")
     updatedAt         DateTime @updatedAt @map("updated_at")
@@ -378,4 +380,58 @@ model Announcement {
 
     @@index([expiresAt])
     @@map("announcements")
+}
+
+// ─────────────────────────────────────────────────────────────
+// UserLocation (live check-in, expires after N days)
+// ─────────────────────────────────────────────────────────────
+model UserLocation {
+    id        String   @id @default(uuid())
+    userId    String   @unique @map("user_id")
+    latitude  Float
+    longitude Float
+    label     String?
+    expiresAt DateTime @map("expires_at")
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([expiresAt])
+    @@map("user_locations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Story ("Hôm nay tôi ăn gì", expires in 24h)
+// ─────────────────────────────────────────────────────────────
+model Story {
+    id        String   @id @default(uuid())
+    userId    String   @map("user_id")
+    imageUrl  String   @map("image_url")
+    caption   String?
+    expiresAt DateTime @map("expires_at")
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    views StoryView[]
+
+    @@index([userId])
+    @@index([expiresAt])
+    @@map("stories")
+}
+
+// ─────────────────────────────────────────────────────────────
+// StoryView (track who viewed a story)
+// ─────────────────────────────────────────────────────────────
+model StoryView {
+    id       String   @id @default(uuid())
+    storyId  String   @map("story_id")
+    userId   String   @map("user_id")
+    viewedAt DateTime @default(now()) @map("viewed_at")
+
+    story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+    user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([storyId, userId])
+    @@index([storyId])
+    @@map("story_views")
 }

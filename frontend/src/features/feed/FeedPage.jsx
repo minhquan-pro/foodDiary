@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
 	fetchFeed,
@@ -9,7 +9,7 @@ import {
 	setFeedType,
 } from "./feedSlice.js";
 import PostCard from "../../components/PostCard.jsx";
-import StoryBar from "../../components/StoryBar.jsx";
+import StoryBar, { groupStoriesByUser } from "../../components/StoryBar.jsx";
 import StoryViewer from "../../components/StoryViewer.jsx";
 import StoryCreateModal from "../../components/StoryCreateModal.jsx";
 
@@ -44,12 +44,13 @@ function SkeletonCard() {
 
 export default function FeedPage() {
 	const dispatch = useDispatch();
-	const { posts, pagination, loading, feedType } = useSelector((state) => state.feed);
+	const { posts, pagination, loading, feedType, stories } = useSelector((state) => state.feed);
 	const sentinelRef = useRef(null);
-
-	const [storyViewerIdx, setStoryViewerIdx] = useState(null);
+	const [storyViewerGroupIdx, setStoryViewerGroupIdx] = useState(null);
 	const [storyCreateOpen, setStoryCreateOpen] = useState(false);
-	const { stories } = useSelector((state) => state.feed);
+
+	// Group stories by user for viewer navigation
+	const storyGroups = useMemo(() => groupStoriesByUser(stories), [stories]);
 
 	// Load data on mount
 	useEffect(() => {
@@ -98,61 +99,66 @@ export default function FeedPage() {
 	const hasMore = pagination && pagination.page < pagination.totalPages;
 
 	return (
-		<>
-		<div className="mx-auto max-w-7xl px-4 sm:px-6 border-b border-gray-100 dark:border-gray-700/60">
-				<StoryBar onStoryClick={(i) => setStoryViewerIdx(i)} onAddStory={() => setStoryCreateOpen(true)} />
+		<div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+			{/* Story bar */}
+			<div className="mb-5 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 px-3 shadow-sm">
+				<StoryBar
+					onStoryClick={(groupIdx) => setStoryViewerGroupIdx(groupIdx)}
+					onAddStory={() => setStoryCreateOpen(true)}
+				/>
 			</div>
 
 			{/* Story viewer */}
-			{storyViewerIdx !== null && (
-				<StoryViewer stories={stories} initialIndex={storyViewerIdx} onClose={() => setStoryViewerIdx(null)} />
+			{storyViewerGroupIdx !== null && storyGroups.length > 0 && (
+				<StoryViewer
+					groups={storyGroups}
+					initialGroupIdx={storyViewerGroupIdx}
+					onClose={() => setStoryViewerGroupIdx(null)}
+				/>
 			)}
 
 			{/* Story create modal */}
 			{storyCreateOpen && <StoryCreateModal onClose={() => setStoryCreateOpen(false)} />}
 
-			{/* ── Main content ──────────────────────────────────────────────── */}
-			<div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
-				{/* Skeleton — first load */}
-				{isFirstLoad ? (
+			{/* Skeleton — first load */}
+			{isFirstLoad ? (
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					{Array.from({ length: 6 }).map((_, i) => (
+						<SkeletonCard key={i} />
+					))}
+				</div>
+			) : posts.length === 0 ? (
+				<div className="py-24 text-center">
+					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+						<span className="text-3xl">
+							{feedType === "friends" ? "👥" : "🍽️"}
+						</span>
+					</div>
+					<p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+						{feedType === "friends"
+							? "Chưa có bài từ người bạn theo dõi"
+							: "Chưa có bài viết nào"}
+					</p>
+					<p className="mt-2 text-sm text-gray-400 dark:text-gray-500 max-w-sm mx-auto">
+						{feedType === "friends"
+							? "Hãy theo dõi mọi người để xem bài viết của họ!"
+							: "Hãy là người đầu tiên chia sẻ đánh giá món ăn!"}
+					</p>
+				</div>
+			) : (
+				<>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-						{Array.from({ length: 6 }).map((_, i) => (
-							<SkeletonCard key={i} />
+						{posts.map((post) => (
+							<PostCard key={post.id} post={post} />
 						))}
+						{/* Loading more skeletons */}
+						{isLoadingMore && Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={`sk-${i}`} />)}
 					</div>
-				) : posts.length === 0 ? (
-					<div className="py-24 text-center">
-						<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-							<span className="text-3xl">
-								{feedType === "friends" ? "👥" : "🍽️"}
-							</span>
-						</div>
-						<p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-							{feedType === "friends"
-								? "Chưa có bài từ người bạn theo dõi"
-								: "Chưa có bài viết nào"}
-						</p>
-						<p className="mt-2 text-sm text-gray-400 dark:text-gray-500 max-w-sm mx-auto">
-							{feedType === "friends"
-								? "Hãy theo dõi mọi người để xem bài viết của họ!"
-								: "Hãy là người đầu tiên chia sẻ đánh giá món ăn!"}
-						</p>
-					</div>
-				) : (
-					<>
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							{posts.map((post) => (
-								<PostCard key={post.id} post={post} />
-							))}
-							{/* Loading more skeletons */}
-							{isLoadingMore && Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={`sk-${i}`} />)}
-						</div>
 
-						{/* Infinite scroll sentinel */}
-						{hasMore && <div ref={sentinelRef} className="h-16" />}
-					</>
-				)}
-			</div>
-		</>
+					{/* Infinite scroll sentinel */}
+					{hasMore && <div ref={sentinelRef} className="h-16" />}
+				</>
+			)}
+		</div>
 	);
 }

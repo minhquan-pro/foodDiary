@@ -4,7 +4,9 @@
       "Bash(node -e \":*)",
       "Bash(node fix_fe_modal.js)",
       "Bash(node fix_summary_btn.js)",
-      "Bash(npx prisma migrate dev --name add_user_birthday)"
+      "Bash(npx prisma migrate dev --name add_user_birthday)",
+      "Bash(node c:/Users/Asus/FoodDiary/_patch_ProfilePage2.js)",
+      "Bash(node c:/Users/Asus/FoodDiary/_fix_postcard.js)"
     ]
   }
 }

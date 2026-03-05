@@ -4,7 +4,7 @@ import { getAllBlockedUserIds } from "../blocks/blocks.service.js";
 
 const POST_INCLUDE = {
 	user: { select: { id: true, name: true, role: true, avatarUrl: true } },
-	_count: { select: { likes: true, comments: true, bookmarks: true, views: true } },
+	_count: { select: { likes: true, comments: true, bookmarks: true } },
 };
 
 /**
@@ -43,7 +43,7 @@ export const createPost = async (userId, data, imageUrl) => {
 export const getFeed = async ({ page = 1, limit = 10, location = null, userId = null }) => {
 	const skip = (page - 1) * limit;
 
-	const where = { isStory: false };
+	const where = {};
 	if (location) where.restaurantAddress = { contains: location };
 
 	// Filter out blocked users
@@ -162,13 +162,13 @@ export const getFriendsFeed = async (userId, { page = 1, limit = 10 }) => {
 
 	let [posts, total] = await Promise.all([
 		prisma.post.findMany({
-			where: { userId: { in: followingIds }, isStory: false },
+			where: { userId: { in: followingIds } },
 			orderBy: { createdAt: "desc" },
 			skip,
 			take: limit,
 			include: POST_INCLUDE,
 		}),
-		prisma.post.count({ where: { userId: { in: followingIds }, isStory: false } }),
+		prisma.post.count({ where: { userId: { in: followingIds } } }),
 	]);
 
 	// attach reactions counts
@@ -400,7 +400,7 @@ export const getReactionUsers = async (postId, emoji = null) => {
 export const getExplorePosts = async ({ sortBy = "trending", page = 1, limit = 21, userId = null }) => {
 	const skip = (page - 1) * limit;
 
-	const where = { isStory: false };
+	const where = {};
 	if (userId) {
 		const blockedIds = await getAllBlockedUserIds(userId);
 		if (blockedIds.length > 0) where.userId = { notIn: blockedIds };
@@ -473,67 +473,6 @@ export const getMapPosts = async () => {
 		orderBy: { createdAt: "desc" },
 	});
 	return posts;
-};
-
-/**
- * Create a story (isStory=true, only image + optional caption).
- */
-export const createStory = async (userId, caption, imageUrl) => {
-	return prisma.post.create({
-		data: {
-			imageUrl,
-			isStory: true,
-			description: caption || "",
-			restaurantName: "",
-			restaurantAddress: "",
-			rating: 5,
-			userId,
-		},
-		include: {
-			user: { select: { id: true, name: true, avatarUrl: true, role: true } },
-			_count: { select: { views: true } },
-		},
-	});
-};
-
-/**
- * Get stories: current user's latest post + followed users' latest posts (last 7 days).
- * Returns one post per user, current user first.
- */
-export const getStories = async (userId) => {
-	const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-	const following = await prisma.follow.findMany({
-		where: { followerId: userId },
-		select: { followingId: true },
-	});
-	const userIds = [userId, ...following.map((f) => f.followingId)];
-
-	const posts = await prisma.post.findMany({
-		where: { userId: { in: userIds }, isStory: true, createdAt: { gte: sevenDaysAgo } },
-		orderBy: { createdAt: "desc" },
-		include: {
-			user: { select: { id: true, name: true, avatarUrl: true, role: true } },
-			_count: { select: { views: true } },
-		},
-	});
-
-	// One story per user (most recent)
-	const seen = new Set();
-	const stories = [];
-	for (const post of posts) {
-		if (!seen.has(post.userId)) {
-			seen.add(post.userId);
-			stories.push(post);
-		}
-	}
-
-	// Current user's story first
-	return stories.sort((a, b) => {
-		if (a.userId === userId) return -1;
-		if (b.userId === userId) return 1;
-		return 0;
-	});
 };
 
 /**
